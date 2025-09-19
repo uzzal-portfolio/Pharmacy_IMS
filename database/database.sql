@@ -15,8 +15,8 @@ CREATE TABLE medicines (
     name VARCHAR(100) NOT NULL,
     code VARCHAR(50) NOT NULL UNIQUE,
     quantity INT NOT NULL,
-    expiry_date DATE NOT NULL,
-    location_code VARCHAR(50),
+    expiry_date DATE NULL,
+    location_code VARCHAR(50) NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

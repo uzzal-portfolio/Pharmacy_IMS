@@ -52,28 +52,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $code = trim($_POST["code"]);
             }
 
-            // Validate expiry date
-            if (empty(trim($_POST["expiry_date"]))) {
-                $expiry_date_err = "Please enter an expiry date.";
-            } else {
-                $expiry_date = trim($_POST["expiry_date"]);
-            }
-
-            // Validate location code
-            if (empty(trim($_POST["location_code"]))) {
-                $location_code_err = "Please enter a location code.";
-            } else {
-                $location_code = trim($_POST["location_code"]);
-            }
-
-            // Quantity for new registration can be 0 or provided
-            $quantity = !empty(trim($_POST["quantity"])) ? trim($_POST["quantity"]) : 0;
-            if (!ctype_digit((string)$quantity)) {
-                $name_err = "Quantity must be an integer."; // Reusing name_err for simplicity
-            }
+            // For new medicine registration, quantity, expiry_date, and location_code are not directly set here.
+            // They will be added via the 'Add Stock' functionality.
+            // Initialize them to default/null values for the addMedicine call.
+            $quantity = 0;
+            $expiry_date = NULL;
+            $location_code = NULL;
 
             // Check input errors before inserting in database
-            if (empty($name_err) && empty($code_err) && empty($expiry_date_err) && empty($location_code_err)) {
+            if (empty($name_err) && empty($code_err)) {
                 if ($inventory->addMedicine($name, $code, $quantity, $expiry_date, $location_code)) {
                     echo "<script>alert('Medicine registered successfully!'); window.location.href='inventory.php';</script>";
                 } else {
@@ -103,14 +90,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $existing_medicine = $inventory->getMedicineById($medicine_id_to_add_stock);
                 if ($existing_medicine) {
                     $new_quantity = $existing_medicine['quantity'] + $quantity_to_add_stock;
-                    // Update only quantity, keeping other details same
+                    $new_expiry_date = trim($_POST['expiry_date_to_add_stock']);
+                    $new_location_code = trim($_POST['location_code_to_add_stock']);
+
                     if ($inventory->updateMedicine(
                         $medicine_id_to_add_stock,
                         $existing_medicine['name'],
                         $existing_medicine['code'],
                         $new_quantity,
-                        $existing_medicine['expiry_date'],
-                        $existing_medicine['location_code']
+                        $new_expiry_date,
+                        $new_location_code
                     )) {
                         echo "<script>alert('Stock updated successfully!'); window.location.href='inventory.php';</script>";
                     } else {
@@ -245,22 +234,7 @@ mysqli_close($link);
                         <span class="invalid-feedback"><?php echo $code_err; ?></span>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group col-md-4">
-                        <label>Initial Quantity (Optional, defaults to 0)</label>
-                        <input type="text" name="quantity" class="form-control" value="0">
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Expiry Date</label>
-                        <input type="date" name="expiry_date" class="form-control <?php echo (!empty($expiry_date_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $expiry_date; ?>" required>
-                        <span class="invalid-feedback"><?php echo $expiry_date_err; ?></span>
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Location Code</label>
-                        <input type="text" name="location_code" class="form-control <?php echo (!empty($location_code_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $location_code; ?>" required>
-                        <span class="invalid-feedback"><?php echo $location_code_err; ?></span>
-                    </div>
-                </div>
+                
                 <div class="form-group">
                     <input type="submit" class="btn btn-primary" value="Register Medicine">
                     <input type="reset" class="btn btn-secondary ml-2" value="Reset">
@@ -401,6 +375,14 @@ mysqli_close($link);
                         <div class="form-group">
                             <label>Quantity to Add</label>
                             <input type="number" name="quantity_to_add_stock" id="modal_quantity_to_add_stock" class="form-control" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Expiry Date</label>
+                            <input type="date" name="expiry_date_to_add_stock" id="modal_expiry_date_to_add_stock" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Location Code</label>
+                            <input type="text" name="location_code_to_add_stock" id="modal_location_code_to_add_stock" class="form-control" required>
                         </div>
                     </div>
                     <div class="modal-footer">

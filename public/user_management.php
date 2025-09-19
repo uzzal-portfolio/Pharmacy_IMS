@@ -170,7 +170,7 @@ mysqli_close($link);
                 <?php endif; ?>
                 <?php if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'online_customer'): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Customer Database</a>
+                        <a class="nav-link" href="customer_database.php">Customer Database</a>
                     </li>
                 <?php endif; ?>
             </ul>
