@@ -1,89 +1,145 @@
 <?php
-
-class Sales {
+class Sales
+{
     private $conn;
+    private $table_name = "sales";
 
-    public function __construct($db_connection) {
-        $this->conn = $db_connection;
+    public $id;
+    public $transaction_id;
+    public $medicine_id;
+    public $customer_id;
+    public $quantity;
+    public $total_price;
+    public $sale_date;
+
+    public $payment_method;
+    public $discount;
+
+    public function __construct($db)
+    {
+        $this->conn = $db;
     }
 
-    public function recordSale($medicine_id, $customer_id, $quantity, $total_price) {
-        // Start transaction
-        mysqli_begin_transaction($this->conn);
+    function create()
+    {
+        $query = "INSERT INTO " . $this->table_name . " SET transaction_id=:transaction_id, medicine_id=:medicine_id, customer_id=:customer_id, quantity=:quantity, total_price=:total_price, payment_method=:payment_method, discount=:discount";
+        $stmt = $this->conn->prepare($query);
 
-        try {
-            // Deduct quantity from inventory
-            $sql_deduct = "UPDATE medicines SET quantity = quantity - ? WHERE id = ? AND quantity >= ?";
-            if ($stmt_deduct = mysqli_prepare($this->conn, $sql_deduct)) {
-                mysqli_stmt_bind_param($stmt_deduct, "iii", $quantity, $medicine_id, $quantity);
-                mysqli_stmt_execute($stmt_deduct);
+        $this->transaction_id = htmlspecialchars(strip_tags($this->transaction_id));
+        $this->medicine_id = htmlspecialchars(strip_tags($this->medicine_id));
+        $this->customer_id = htmlspecialchars(strip_tags($this->customer_id));
+        $this->quantity = htmlspecialchars(strip_tags($this->quantity));
+        $this->total_price = htmlspecialchars(strip_tags($this->total_price));
+        $this->payment_method = htmlspecialchars(strip_tags($this->payment_method));
+        $this->discount = htmlspecialchars(strip_tags($this->discount));
 
-                if (mysqli_stmt_affected_rows($stmt_deduct) == 0) {
-                    throw new Exception("Not enough stock or medicine not found.");
-                }
-                mysqli_stmt_close($stmt_deduct);
-            } else {
-                throw new Exception("Error preparing statement: " . mysqli_error($this->conn));
-            }
+        $stmt->bindParam(":transaction_id", $this->transaction_id);
+        $stmt->bindParam(":medicine_id", $this->medicine_id);
+        $stmt->bindParam(":customer_id", $this->customer_id);
+        $stmt->bindParam(":quantity", $this->quantity);
+        $stmt->bindParam(":total_price", $this->total_price);
+        $stmt->bindParam(":payment_method", $this->payment_method);
+        $stmt->bindParam(":discount", $this->discount);
 
-            // Record the sale
-            $sql_sale = "INSERT INTO sales (medicine_id, customer_id, quantity, total_price) VALUES (?, ?, ?, ?)";
-            if ($stmt_sale = mysqli_prepare($this->conn, $sql_sale)) {
-                mysqli_stmt_bind_param($stmt_sale, "iiid", $medicine_id, $customer_id, $quantity, $total_price);
-                mysqli_stmt_execute($stmt_sale);
-                mysqli_stmt_close($stmt_sale);
-            } else {
-                throw new Exception("Error preparing statement: " . mysqli_error($this->conn));
-            }
-
-            // Commit transaction
-            mysqli_commit($this->conn);
+        if ($stmt->execute()) {
             return true;
-
-        } catch (Exception $e) {
-            // Rollback transaction on error
-            mysqli_rollback($this->conn);
-            error_log("Sale recording failed: " . $e->getMessage());
-            return false;
         }
+        return false;
     }
 
-    public function getAllSales() {
-        $sql = "SELECT s.id, m.name as medicine_name, c.name as customer_name, s.quantity, s.total_price, s.sale_date 
-                FROM sales s
-                JOIN medicines m ON s.medicine_id = m.id
-                LEFT JOIN customers c ON s.customer_id = c.id
-                ORDER BY s.sale_date DESC";
-        $result = mysqli_query($this->conn, $sql);
-        $sales = [];
+    function createTransaction($items, $customer_id, $transaction_id, $total_discount, $payment_method)
+    {
+        try {
+            $this->conn->beginTransaction();
 
-        if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $sales[] = $row;
+            // 1. Calculate Grand Total for discount distribution
+            $grand_total = 0;
+            foreach ($items as $item) {
+                $grand_total += ($item['price'] * $item['qty']);
             }
-        }
-        return $sales;
-    }
 
-    public function searchMedicines($search_term) {
-        $sql = "SELECT id, name, code, quantity FROM medicines WHERE name LIKE ? OR code LIKE ? ORDER BY name ASC";
-        $search_param = "%" . $search_term . "%";
-        $medicines = [];
+            foreach ($items as $item) {
+                // 2. Check stock
+                $query = "SELECT quantity FROM medicines WHERE id = ? FOR UPDATE";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(1, $item['id']);
+                $stmt->execute();
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "ss", $search_param, $search_param);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
+                if (!$row || $row['quantity'] < $item['qty']) {
+                    $this->conn->rollBack();
+                    return "Insufficient stock for medicine ID: " . $item['id'];
+                }
 
-            if (mysqli_num_rows($result) > 0) {
-                while ($row = mysqli_fetch_assoc($result)) {
-                    $medicines[] = $row;
+                // 3. Deduct stock
+                $new_qty = $row['quantity'] - $item['qty'];
+                $updateQuery = "UPDATE medicines SET quantity = ? WHERE id = ?";
+                $updateStmt = $this->conn->prepare($updateQuery);
+                $updateStmt->bindParam(1, $new_qty);
+                $updateStmt->bindParam(2, $item['id']);
+                $updateStmt->execute();
+
+                // 4. Calculate Item Discount Share
+                $item_total = $item['price'] * $item['qty'];
+                $item_discount = 0;
+                if ($grand_total > 0) {
+                    $item_discount = ($item_total / $grand_total) * $total_discount;
+                }
+
+                // 5. Insert Sale Record
+                $this->transaction_id = $transaction_id;
+                $this->medicine_id = $item['id'];
+                $this->customer_id = $customer_id;
+                $this->quantity = $item['qty'];
+                $this->total_price = $item_total;
+                $this->payment_method = $payment_method;
+                $this->discount = number_format($item_discount, 2, '.', ''); // Format to 2 decimal match DB
+
+                if (!$this->create()) {
+                    $this->conn->rollBack();
+                    return "Failed to record sale";
                 }
             }
-            mysqli_stmt_close($stmt);
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            return $e->getMessage();
         }
-        return $medicines;
+    }
+
+    function read()
+    {
+        $query = "SELECT s.id, s.transaction_id, m.name as medicine_name, c.name as customer_name, s.quantity, s.total_price, s.discount, s.payment_method, s.sale_date FROM " . $this->table_name . " s LEFT JOIN medicines m ON s.medicine_id = m.id LEFT JOIN customers c ON s.customer_id = c.id ORDER BY s.sale_date DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    function readOne()
+    {
+        $query = "SELECT s.id, s.transaction_id, m.name as medicine_name, c.name as customer_name, s.quantity, s.total_price, s.sale_date FROM " . $this->table_name . " s LEFT JOIN medicines m ON s.medicine_id = m.id LEFT JOIN customers c ON s.customer_id = c.id WHERE s.id = ? LIMIT 0,1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $this->transaction_id = $row['transaction_id'];
+        $this->medicine_id = $row['medicine_name'];
+        $this->customer_id = $row['customer_name'];
+        $this->quantity = $row['quantity'];
+        $this->total_price = $row['total_price'];
+        $this->sale_date = $row['sale_date'];
+    }
+
+    function readByTransactionId($transaction_id)
+    {
+        $query = "SELECT s.id, s.transaction_id, m.name as medicine_name, c.name as customer_name, c.phone as customer_phone, s.quantity, s.total_price, s.discount, s.payment_method, s.sale_date, m.price as unit_price FROM " . $this->table_name . " s LEFT JOIN medicines m ON s.medicine_id = m.id LEFT JOIN customers c ON s.customer_id = c.id WHERE s.transaction_id = ? ORDER BY s.id ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $transaction_id);
+        $stmt->execute();
+        return $stmt;
     }
 }
-
 ?>

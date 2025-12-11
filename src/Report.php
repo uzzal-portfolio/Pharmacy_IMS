@@ -1,102 +1,53 @@
 <?php
+require_once __DIR__ . '/lib/fpdf/fpdf.php';
 
-class Report {
+class Report
+{
     private $conn;
 
-    public function __construct($db_connection) {
-        $this->conn = $db_connection;
+    public function __construct($db)
+    {
+        $this->conn = $db;
     }
 
-    public function getStockReport() {
-        $sql = "SELECT name, code, quantity, expiry_date, location_code FROM medicines ORDER BY name ASC";
-        $result = mysqli_query($this->conn, $sql);
-        $stock_data = [];
-
-        if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $stock_data[] = $row;
-            }
-        }
-        return $stock_data;
+    function generateStockReport($start_date, $end_date)
+    {
+        $query = "SELECT name, code, quantity, expiry_date, location_code FROM medicines WHERE created_at BETWEEN :start_date AND :end_date ORDER BY name ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":start_date", $start_date);
+        $stmt->bindParam(":end_date", $end_date);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getExpiryReport($start_date = null, $end_date = null) {
-        $sql = "SELECT name, code, quantity, expiry_date, location_code FROM medicines WHERE expiry_date < CURDATE()";
-        if ($start_date && $end_date) {
-            $sql = "SELECT name, code, quantity, expiry_date, location_code FROM medicines WHERE expiry_date BETWEEN ? AND ? ORDER BY expiry_date ASC";
-            if ($stmt = mysqli_prepare($this->conn, $sql)) {
-                mysqli_stmt_bind_param($stmt, "ss", $start_date, $end_date);
-                mysqli_stmt_execute($stmt);
-                $result = mysqli_stmt_get_result($stmt);
-            }
-        } else {
-            $sql = "SELECT name, code, quantity, expiry_date, location_code FROM medicines WHERE expiry_date < CURDATE() ORDER BY expiry_date ASC";
-            $result = mysqli_query($this->conn, $sql);
-        }
-
-        $expiry_data = [];
-        if (isset($result) && mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $expiry_data[] = $row;
-            }
-        }
-        return $expiry_data;
+    function generateSalesReport($start_date, $end_date)
+    {
+        $query = "SELECT s.transaction_id, m.name as medicine_name, c.name as customer_name, s.quantity, s.total_price, s.discount, s.payment_method, (s.total_price - s.discount) as final_price, s.sale_date FROM sales s LEFT JOIN medicines m ON s.medicine_id = m.id LEFT JOIN customers c ON s.customer_id = c.id WHERE s.sale_date BETWEEN :start_date AND :end_date ORDER BY s.sale_date DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":start_date", $start_date);
+        $stmt->bindParam(":end_date", $end_date);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getSalesReport($start_date, $end_date) {
-        $sql = "SELECT s.id as sale_id, m.name as medicine_name, c.name as customer_name, s.quantity, s.total_price, s.sale_date 
-                FROM sales s
-                JOIN medicines m ON s.medicine_id = m.id
-                LEFT JOIN customers c ON s.customer_id = c.id
-                WHERE s.sale_date BETWEEN ? AND ? ORDER BY s.sale_date DESC";
-        
-        $sales_data = [];
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "ss", $start_date, $end_date);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-
-            if (mysqli_num_rows($result) > 0) {
-                while ($row = mysqli_fetch_assoc($result)) {
-                    $sales_data[] = $row;
-                }
-            }
-            mysqli_stmt_close($stmt);
-        }
-        return $sales_data;
+    function generateExpiryReport($start_date, $end_date)
+    {
+        $query = "SELECT name, code, quantity, expiry_date, location_code FROM medicines WHERE expiry_date BETWEEN :start_date AND :end_date ORDER BY expiry_date ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":start_date", $start_date);
+        $stmt->bindParam(":end_date", $end_date);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getProcurementReport($start_date, $end_date) {
-        $sql = "SELECT id, medicine_name, quantity, status, request_date FROM procurement WHERE request_date BETWEEN ? AND ? ORDER BY request_date DESC";
-        
-        $procurement_data = [];
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "ss", $start_date, $end_date);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-
-            if (mysqli_num_rows($result) > 0) {
-                while ($row = mysqli_fetch_assoc($result)) {
-                    $procurement_data[] = $row;
-                }
-            }
-            mysqli_stmt_close($stmt);
-        }
-        return $procurement_data;
-    }
-
-    public function getCustomerReport() {
-        $sql = "SELECT id, name, phone, email, created_at FROM customers ORDER BY name ASC";
-        $result = mysqli_query($this->conn, $sql);
-        $customer_data = [];
-
-        if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $customer_data[] = $row;
-            }
-        }
-        return $customer_data;
+    function generateAuditReport($start_date, $end_date)
+    {
+        $query = "SELECT al.id, u.username, al.action, al.log_date FROM audit_log al LEFT JOIN users u ON al.user_id = u.id WHERE al.log_date BETWEEN :start_date AND :end_date ORDER BY al.log_date DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":start_date", $start_date);
+        $stmt->bindParam(":end_date", $end_date);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
-
 ?>

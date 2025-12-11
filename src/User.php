@@ -1,97 +1,112 @@
 <?php
-
 class User {
     private $conn;
+    private $table_name = "users";
 
-    public function __construct($db_connection) {
-        $this->conn = $db_connection;
+    public $id;
+    public $username;
+    public $password;
+    public $role;
+    public $created_at;
+
+    public function __construct($db){
+        $this->conn = $db;
     }
 
-    public function getAllUsers() {
-        $sql = "SELECT id, username, role, created_at FROM users ORDER BY username ASC";
-        $result = mysqli_query($this->conn, $sql);
-        $users = [];
+    function register(){
+        $query = "INSERT INTO " . $this->table_name . " SET username=:username, password=:password, role=:role";
+        $stmt = $this->conn->prepare($query);
 
-        if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $users[] = $row;
-            }
-        }
-        return $users;
-    }
+        $this->username=htmlspecialchars(strip_tags($this->username));
+        $this->password=htmlspecialchars(strip_tags($this->password));
+        $this->role=htmlspecialchars(strip_tags($this->role));
 
-    public function getUserById($id) {
-        $sql = "SELECT id, username, role FROM users WHERE id = ?";
+        $stmt->bindParam(":username", $this->username);
+        $password_hash = password_hash($this->password, PASSWORD_BCRYPT);
+        $stmt->bindParam(":password", $password_hash);
+        $stmt->bindParam(":role", $this->role);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "i", $id);
-            if (mysqli_stmt_execute($stmt)) {
-                $result = mysqli_stmt_get_result($stmt);
-                if (mysqli_num_rows($result) == 1) {
-                    return mysqli_fetch_assoc($result);
-                }
-            }
-            mysqli_stmt_close($stmt);
-        }
-        return null;
-    }
-
-    public function addUser($username, $password, $role) {
-        $sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
-
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            mysqli_stmt_bind_param($stmt, "sss", $username, $hashed_password, $role);
-
-            if (mysqli_stmt_execute($stmt)) {
-                return true;
-            } else {
-                return false;
-            }
-            mysqli_stmt_close($stmt);
-        }
-        return false;
-    }
-
-    public function updateUser($id, $username, $role, $password = null) {
-        if ($password) {
-            $sql = "UPDATE users SET username = ?, role = ?, password = ? WHERE id = ?";
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            if ($stmt = mysqli_prepare($this->conn, $sql)) {
-                mysqli_stmt_bind_param($stmt, "sssi", $username, $role, $hashed_password, $id);
-            }
-        } else {
-            $sql = "UPDATE users SET username = ?, role = ? WHERE id = ?";
-            if ($stmt = mysqli_prepare($this->conn, $sql)) {
-                mysqli_stmt_bind_param($stmt, "ssi", $username, $role, $id);
-            }
-        }
-
-        if (isset($stmt) && mysqli_stmt_execute($stmt)) {
-            mysqli_stmt_close($stmt);
+        if($stmt->execute()){
             return true;
-        } else if (isset($stmt)) {
-            mysqli_stmt_close($stmt);
-            return false;
         }
         return false;
     }
 
-    public function deleteUser($id) {
-        $sql = "DELETE FROM users WHERE id = ?";
+    function login(){
+        $query = "SELECT id, username, password, role FROM " . $this->table_name . " WHERE username = :username LIMIT 0,1";
+        $stmt = $this->conn->prepare($query);
+        $this->username=htmlspecialchars(strip_tags($this->username));
+        $stmt->bindParam(':username', $this->username);
+        $stmt->execute();
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "i", $id);
+        if($stmt->rowCount() > 0){
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $this->id = $row['id'];
+            $this->username = $row['username'];
+            $this->role = $row['role'];
+            $hashed_password = $row['password'];
 
-            if (mysqli_stmt_execute($stmt)) {
+            if(password_verify($this->password, $hashed_password)){
                 return true;
-            } else {
-                return false;
             }
-            mysqli_stmt_close($stmt);
+        }
+        return false;
+    }
+
+    function usernameExists(){
+        $query = "SELECT id FROM " . $this->table_name . " WHERE username = :username LIMIT 0,1";
+        $stmt = $this->conn->prepare($query);
+        $this->username=htmlspecialchars(strip_tags($this->username));
+        $stmt->bindParam(':username', $this->username);
+        $stmt->execute();
+        return $stmt->rowCount() > 0;
+    }
+
+    function read(){
+        $query = "SELECT id, username, role, created_at FROM " . $this->table_name . " ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    function readOne(){
+        $query = "SELECT id, username, role, created_at FROM " . $this->table_name . " WHERE id = ? LIMIT 0,1";
+        $stmt = $this->conn->prepare( $query );
+        $stmt->bindParam(1, $this->id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $this->username = $row['username'];
+        $this->role = $row['role'];
+        $this->created_at = $row['created_at'];
+    }
+
+    function updateRole(){
+        $query = "UPDATE " . $this->table_name . " SET role = :role WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        $this->role=htmlspecialchars(strip_tags($this->role));
+        $this->id=htmlspecialchars(strip_tags($this->id));
+
+        $stmt->bindParam(':role', $this->role);
+        $stmt->bindParam(':id', $this->id);
+
+        if($stmt->execute()){
+            return true;
+        }
+        return false;
+    }
+
+    function delete(){
+        $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
+        $stmt = $this->conn->prepare($query);
+        $this->id=htmlspecialchars(strip_tags($this->id));
+        $stmt->bindParam(1, $this->id);
+
+        if($stmt->execute()){
+            return true;
         }
         return false;
     }
 }
-
 ?>

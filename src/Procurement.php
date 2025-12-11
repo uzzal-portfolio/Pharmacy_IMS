@@ -1,56 +1,86 @@
 <?php
-
 class Procurement {
     private $conn;
+    private $table_name = "procurement";
 
-    public function __construct($db_connection) {
-        $this->conn = $db_connection;
+    public $id;
+    public $medicine_name;
+    public $quantity;
+    public $status;
+    public $request_date;
+
+    public function __construct($db){
+        $this->conn = $db;
     }
 
-    public function requestPurchase($medicine_name, $quantity) {
-        $sql = "INSERT INTO procurement (medicine_name, quantity) VALUES (?, ?)";
+    function create(){
+        $query = "INSERT INTO " . $this->table_name . " SET medicine_name=:medicine_name, quantity=:quantity, status=:status";
+        $stmt = $this->conn->prepare($query);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "si", $medicine_name, $quantity);
+        $this->medicine_name=htmlspecialchars(strip_tags($this->medicine_name));
+        $this->quantity=htmlspecialchars(strip_tags($this->quantity));
+        $this->status=htmlspecialchars(strip_tags($this->status));
 
-            if (mysqli_stmt_execute($stmt)) {
-                return true;
-            } else {
-                return false;
-            }
-            mysqli_stmt_close($stmt);
+        $stmt->bindParam(":medicine_name", $this->medicine_name);
+        $stmt->bindParam(":quantity", $this->quantity);
+        $stmt->bindParam(":status", $this->status);
+
+        if($stmt->execute()){
+            return true;
         }
         return false;
     }
 
-    public function getAllRequests() {
-        $sql = "SELECT id, medicine_name, quantity, status, request_date FROM procurement ORDER BY request_date DESC";
-        $result = mysqli_query($this->conn, $sql);
-        $requests = [];
-
-        if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $requests[] = $row;
-            }
-        }
-        return $requests;
+    function read(){
+        $query = "SELECT id, medicine_name, quantity, status, request_date FROM " . $this->table_name . " ORDER BY request_date DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
     }
 
-    public function updateRequestStatus($request_id, $status) {
-        $sql = "UPDATE procurement SET status = ? WHERE id = ?";
+    function readOne(){
+        $query = "SELECT id, medicine_name, quantity, status, request_date FROM " . $this->table_name . " WHERE id = ? LIMIT 0,1";
+        $stmt = $this->conn->prepare( $query );
+        $stmt->bindParam(1, $this->id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "si", $status, $request_id);
+        $this->medicine_name = $row['medicine_name'];
+        $this->quantity = $row['quantity'];
+        $this->status = $row['status'];
+        $this->request_date = $row['request_date'];
+    }
 
-            if (mysqli_stmt_execute($stmt)) {
-                return true;
-            } else {
-                return false;
-            }
-            mysqli_stmt_close($stmt);
+    function update(){
+        $query = "UPDATE " . $this->table_name . " SET medicine_name = :medicine_name, quantity = :quantity, status = :status WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        $this->medicine_name=htmlspecialchars(strip_tags($this->medicine_name));
+        $this->quantity=htmlspecialchars(strip_tags($this->quantity));
+        $this->status=htmlspecialchars(strip_tags($this->status));
+        $this->id=htmlspecialchars(strip_tags($this->id));
+
+        $stmt->bindParam(':medicine_name', $this->medicine_name);
+        $stmt->bindParam(':quantity', $this->quantity);
+        $stmt->bindParam(':status', $this->status);
+        $stmt->bindParam(':id', $this->id);
+
+        if($stmt->execute()){
+            return true;
+        }
+        return false;
+    }
+
+    function delete(){
+        $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
+        $stmt = $this->conn->prepare($query);
+        $this->id=htmlspecialchars(strip_tags($this->id));
+        $stmt->bindParam(1, $this->id);
+
+        if($stmt->execute()){
+            return true;
         }
         return false;
     }
 }
-
 ?>

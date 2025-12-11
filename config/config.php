@@ -1,14 +1,25 @@
 <?php
+// Database credentials
 define('DB_SERVER', 'localhost');
 define('DB_USERNAME', 'root');
 define('DB_PASSWORD', '');
 define('DB_NAME', 'pharmacy_management');
 
-/* Attempt to connect to MySQL database */
-$link = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
+class Database
+{
+    public $conn;
 
-// Check connection
-if($link === false){
-    die("ERROR: Could not connect. " . mysqli_connect_error());
+    public function getConnection()
+    {
+        $this->conn = null;
+        try {
+            $this->conn = new PDO("mysql:host=" . DB_SERVER . ";dbname=" . DB_NAME, DB_USERNAME, DB_PASSWORD);
+            $this->conn->exec("set names utf8");
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch (PDOException $exception) {
+            echo "Connection error: " . $exception->getMessage();
+        }
+        return $this->conn;
+    }
 }
 ?>

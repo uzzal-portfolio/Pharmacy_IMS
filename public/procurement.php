@@ -1,38 +1,25 @@
 <?php
 session_start();
 
-// Check if the user is logged in, otherwise redirect to login page
-if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
+if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true || ($_SESSION["role"] !== 'admin' && $_SESSION["role"] !== 'store_clerk')) {
     header("location: login.php");
-    exit;
-}
-
-// Check user role for access control
-if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'store_clerk') {
-    header("location: welcome.php"); // Redirect to welcome page if not authorized
     exit;
 }
 
 require_once '../config/config.php';
 require_once '../src/Procurement.php';
 
-$procurement = new Procurement($link);
+$database = new Database();
+$db = $database->getConnection();
 
-$medicine_name = $quantity = "";
+$procurement = new Procurement($db);
+
+$medicine_name = $quantity = $status = "";
 $medicine_name_err = $quantity_err = "";
 
-// Process request form submission
+// Handle POST requests
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST['action']) && $_POST['action'] == 'update_status') {
-        $request_id = $_POST['request_id'];
-        $status = $_POST['status'];
-
-        if ($procurement->updateRequestStatus($request_id, $status)) {
-            echo "<script>alert('Request status updated successfully!'); window.location.href='procurement.php';</script>";
-        } else {
-            echo "<script>alert('Error: Could not update request status.'); window.location.href='procurement.php';</script>";
-        }
-    } else {
+    if (isset($_POST["add_request"])) {
         // Validate medicine name
         if (empty(trim($_POST["medicine_name"]))) {
             $medicine_name_err = "Please enter a medicine name.";
@@ -42,173 +29,221 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Validate quantity
         if (empty(trim($_POST["quantity"]))) {
-            $quantity_err = "Please enter the quantity.";
-        } elseif (!ctype_digit(trim($_POST["quantity"]))) {
-            $quantity_err = "Quantity must be an integer.";
+            $quantity_err = "Please enter a quantity.";
+        } elseif (!is_numeric($_POST["quantity"]) || $_POST["quantity"] < 0) {
+            $quantity_err = "Quantity must be a positive number.";
         } else {
             $quantity = trim($_POST["quantity"]);
         }
 
-        // Check input errors before inserting in database
+        $status = "pending"; // Default status
+
         if (empty($medicine_name_err) && empty($quantity_err)) {
-            if ($procurement->requestPurchase($medicine_name, $quantity)) {
-                echo "<script>alert('Purchase request submitted successfully!'); window.location.href='procurement.php';</script>";
+            $procurement->medicine_name = $medicine_name;
+            $procurement->quantity = $quantity;
+            $procurement->status = $status;
+
+            if ($procurement->create()) {
+                header("location: procurement.php");
             } else {
-                echo "<script>alert('Error: Could not submit purchase request.'); window.location.href='procurement.php';</script>";
+                echo "Something went wrong. Please try again later.";
             }
+        }
+    } elseif (isset($_POST["update_request"])) {
+        $procurement->id = $_POST["id"];
+        $procurement->medicine_name = $_POST["medicine_name"];
+        $procurement->quantity = $_POST["quantity"];
+        $procurement->status = $_POST["status"];
+
+        if ($procurement->update()) {
+            header("location: procurement.php");
+        } else {
+            echo "Something went wrong. Please try again later.";
+        }
+    } elseif (isset($_POST["delete_request"])) {
+        $procurement->id = $_POST["id"];
+        if ($procurement->delete()) {
+            header("location: procurement.php");
+        } else {
+            echo "Something went wrong. Please try again later.";
         }
     }
 }
 
-$all_requests = $procurement->getAllRequests();
+// Read procurement requests
+$stmt = $procurement->read();
+$requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-mysqli_close($link);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Procurement Management</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        body{ font: 14px sans-serif; }
-        .wrapper{ width: 90%; margin: 0 auto; padding: 20px; }
-        .table-responsive { margin-top: 20px; }
+        body {
+            font: 14px sans-serif;
+        }
+
+        .wrapper {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
         .navbar-nav .nav-link {
             padding-right: 1rem;
             padding-left: 1rem;
         }
     </style>
 </head>
+
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Pharmacy IMS</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="welcome.php">Home</a>
-                </li>
-                <?php if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'store_clerk'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="inventory.php">Inventory</a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'store_clerk' || $_SESSION['role'] == 'online_customer'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="sales.php">Sales</a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'store_clerk'): ?>
-                    <li class="nav-item active">
-                        <a class="nav-link" href="procurement.php">Procurement <span class="sr-only">(current)</span></a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'report_viewer'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="reports.php">Reports</a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($_SESSION['role'] == 'admin'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="user_management.php">User Management</a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'online_customer'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="customer_database.php">Customer Database</a>
-                    </li>
-                <?php endif; ?>
-            </ul>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <span class="navbar-text mr-3">Hi, <b><?php echo htmlspecialchars($_SESSION["username"]); ?></b> (<?php echo htmlspecialchars($_SESSION["role"]); ?>)</span>
-                </li>
-                <li class="nav-item">
-                    <a href="logout.php" class="btn btn-danger">Sign Out</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <div class="wrapper">
-        <h2>Procurement Management</h2>
+        <h2 class="mb-4">Procurement Management</h2>
 
-        <!-- Request New Purchase Form -->
-        <div class="mb-4">
-            <h3>Request New Purchase</h3>
-            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label>Medicine Name</label>
-                        <input type="text" name="medicine_name" class="form-control <?php echo (!empty($medicine_name_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $medicine_name; ?>">
-                        <span class="invalid-feedback"><?php echo $medicine_name_err; ?></span>
+        <!-- Add Procurement Request Form -->
+        <div class="card mb-4">
+            <div class="card-header">Request New Medicine</div>
+            <div class="card-body">
+                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Medicine Name</label>
+                            <input type="text" name="medicine_name"
+                                class="form-control <?php echo (!empty($medicine_name_err)) ? 'is-invalid' : ''; ?>"
+                                value="<?php echo $medicine_name; ?>">
+                            <span class="invalid-feedback"><?php echo $medicine_name_err; ?></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Quantity</label>
+                            <input type="number" name="quantity"
+                                class="form-control <?php echo (!empty($quantity_err)) ? 'is-invalid' : ''; ?>"
+                                value="<?php echo $quantity; ?>">
+                            <span class="invalid-feedback"><?php echo $quantity_err; ?></span>
+                        </div>
                     </div>
-                    <div class="form-group col-md-6">
-                        <label>Quantity</label>
-                        <input type="number" name="quantity" class="form-control <?php echo (!empty($quantity_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $quantity; ?>" min="1">
-                        <span class="invalid-feedback"><?php echo $quantity_err; ?></span>
+                    <div class="form-group">
+                        <input type="submit" name="add_request" class="btn btn-primary" value="Submit Request">
                     </div>
-                </div>
-                <div class="form-group">
-                    <input type="submit" class="btn btn-primary" value="Submit Request">
-                    <input type="reset" class="btn btn-secondary ml-2" value="Reset">
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
 
-        <!-- All Procurement Requests -->
-        <h3>All Procurement Requests</h3>
-        <?php if (!empty($all_requests)): ?>
-            <div class="table-responsive">
+        <!-- Procurement Request List Table -->
+        <div class="card">
+            <div class="card-header">Procurement Requests</div>
+            <div class="card-body">
                 <table class="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            <th>Request ID</th>
+                            <th>ID</th>
                             <th>Medicine Name</th>
                             <th>Quantity</th>
                             <th>Status</th>
                             <th>Request Date</th>
-                            <?php if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'store_clerk'): ?>
-                                <th>Actions</th>
-                            <?php endif; ?>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($all_requests as $request): ?>
-                            <tr>
-                                <td><?php echo $request['id']; ?></td>
-                                <td><?php echo htmlspecialchars($request['medicine_name']); ?></td>
-                                <td><?php echo $request['quantity']; ?></td>
-                                <td><?php echo htmlspecialchars($request['status']); ?></td>
-                                <td><?php echo $request['request_date']; ?></td>
-                                <?php if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'store_clerk'): ?>
+                        <?php if (count($requests) > 0): ?>
+                            <?php foreach ($requests as $request): ?>
+                                <tr>
+                                    <td><?php echo $request['id']; ?></td>
+                                    <td><?php echo $request['medicine_name']; ?></td>
+                                    <td><?php echo $request['quantity']; ?></td>
+                                    <td><?php echo $request['status']; ?></td>
+                                    <td><?php echo $request['request_date']; ?></td>
                                     <td>
-                                        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="d-inline">
-                                            <input type="hidden" name="action" value="update_status">
-                                            <input type="hidden" name="request_id" value="<?php echo $request['id']; ?>">
-                                            <select name="status" class="form-control form-control-sm d-inline w-auto" onchange="this.form.submit()">
-                                                <option value="pending" <?php echo ($request['status'] == 'pending') ? 'selected' : ''; ?>>Pending</option>
-                                                <option value="approved" <?php echo ($request['status'] == 'approved') ? 'selected' : ''; ?>>Approved</option>
-                                                <option value="rejected" <?php echo ($request['status'] == 'rejected') ? 'selected' : ''; ?>>Rejected</option>
-                                            </select>
+                                        <button type="button" class="btn btn-sm btn-info edit-request-btn"
+                                            data-id="<?php echo $request['id']; ?>"
+                                            data-name="<?php echo $request['medicine_name']; ?>"
+                                            data-quantity="<?php echo $request['quantity']; ?>"
+                                            data-status="<?php echo $request['status']; ?>">Edit</button>
+                                        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post"
+                                            style="display: inline-block;">
+                                            <input type="hidden" name="id" value="<?php echo $request['id']; ?>">
+                                            <input type="submit" name="delete_request" class="btn btn-sm btn-danger"
+                                                value="Delete">
                                         </form>
                                     </td>
-                                <?php endif; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="6">No procurement requests found.</td>
                             </tr>
-                        <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
-        <?php else: ?>
-            <p>No procurement requests found.</p>
-        <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Edit Procurement Request Modal -->
+    <div class="modal fade" id="editRequestModal" tabindex="-1" role="dialog" aria-labelledby="editRequestModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editRequestModalLabel">Edit Procurement Request</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="request-id">
+                        <div class="form-group">
+                            <label>Medicine Name</label>
+                            <input type="text" name="medicine_name" id="request-name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" name="quantity" id="request-quantity" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status" id="request-status" class="form-control">
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <input type="submit" name="update_request" class="btn btn-primary" value="Save changes">
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.edit-request-btn').on('click', function () {
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                var quantity = $(this).data('quantity');
+                var status = $(this).data('status');
+
+                $('#request-id').val(id);
+                $('#request-name').val(name);
+                $('#request-quantity').val(quantity);
+                $('#request-status').val(status);
+
+                $('#editRequestModal').modal('show');
+            });
+        });
+    </script>
 </body>
+
 </html>

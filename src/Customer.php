@@ -1,110 +1,101 @@
 <?php
-
 class Customer {
     private $conn;
+    private $table_name = "customers";
 
-    public function __construct($db_connection) {
-        $this->conn = $db_connection;
+    public $id;
+    public $name;
+    public $phone;
+    public $email;
+    public $created_at;
+
+    public function __construct($db){
+        $this->conn = $db;
     }
 
-    public function addCustomer($name, $phone, $email) {
-        $sql = "INSERT INTO customers (name, phone, email) VALUES (?, ?, ?)";
+    function create(){
+        $query = "INSERT INTO " . $this->table_name . " SET name=:name, phone=:phone, email=:email";
+        $stmt = $this->conn->prepare($query);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "sss", $name, $phone, $email);
+        $this->name=htmlspecialchars(strip_tags($this->name));
+        $this->phone=htmlspecialchars(strip_tags($this->phone));
+        $this->email=htmlspecialchars(strip_tags($this->email));
 
-            if (mysqli_stmt_execute($stmt)) {
-                return true;
-            } else {
-                return false;
-            }
-            mysqli_stmt_close($stmt);
+        $stmt->bindParam(":name", $this->name);
+        $stmt->bindParam(":phone", $this->phone);
+        $stmt->bindParam(":email", $this->email);
+
+        if($stmt->execute()){
+            return true;
         }
         return false;
     }
 
-    public function getAllCustomers() {
-        $sql = "SELECT id, name, phone, email, created_at FROM customers ORDER BY name ASC";
-        $result = mysqli_query($this->conn, $sql);
-        $customers = [];
-
-        if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $customers[] = $row;
-            }
-        }
-        return $customers;
+    function read(){
+        $query = "SELECT id, name, phone, email, created_at FROM " . $this->table_name . " ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
     }
 
-    public function getCustomerById($id) {
-        $sql = "SELECT id, name, phone, email, created_at FROM customers WHERE id = ?";
+    function readOne(){
+        $query = "SELECT id, name, phone, email, created_at FROM " . $this->table_name . " WHERE id = ? LIMIT 0,1";
+        $stmt = $this->conn->prepare( $query );
+        $stmt->bindParam(1, $this->id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "i", $id);
-            if (mysqli_stmt_execute($stmt)) {
-                $result = mysqli_stmt_get_result($stmt);
-                if (mysqli_num_rows($result) == 1) {
-                    return mysqli_fetch_assoc($result);
-                }
-            }
-            mysqli_stmt_close($stmt);
-        }
-        return null;
+        $this->name = $row['name'];
+        $this->phone = $row['phone'];
+        $this->email = $row['email'];
+        $this->created_at = $row['created_at'];
     }
 
-    public function updateCustomer($id, $name, $phone, $email) {
-        $sql = "UPDATE customers SET name = ?, phone = ?, email = ? WHERE id = ?";
+    function update(){
+        $query = "UPDATE " . $this->table_name . " SET name = :name, phone = :phone, email = :email WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "sssi", $name, $phone, $email, $id);
+        $this->name=htmlspecialchars(strip_tags($this->name));
+        $this->phone=htmlspecialchars(strip_tags($this->phone));
+        $this->email=htmlspecialchars(strip_tags($this->email));
+        $this->id=htmlspecialchars(strip_tags($this->id));
 
-            if (mysqli_stmt_execute($stmt)) {
-                return true;
-            } else {
-                return false;
-            }
-            mysqli_stmt_close($stmt);
+        $stmt->bindParam(':name', $this->name);
+        $stmt->bindParam(':phone', $this->phone);
+        $stmt->bindParam(':email', $this->email);
+        $stmt->bindParam(':id', $this->id);
+
+        if($stmt->execute()){
+            return true;
         }
         return false;
     }
 
-    public function deleteCustomer($id) {
-        $sql = "DELETE FROM customers WHERE id = ?";
+    function delete(){
+        $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
+        $stmt = $this->conn->prepare($query);
+        $this->id=htmlspecialchars(strip_tags($this->id));
+        $stmt->bindParam(1, $this->id);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "i", $id);
-
-            if (mysqli_stmt_execute($stmt)) {
-                return true;
-            } else {
-                return false;
-            }
-            mysqli_stmt_close($stmt);
+        if($stmt->execute()){
+            return true;
         }
         return false;
     }
 
-    public function getCustomerPurchaseHistory($customer_id) {
-        $sql = "SELECT s.id as sale_id, m.name as medicine_name, s.quantity, s.total_price, s.sale_date 
-                FROM sales s
-                JOIN medicines m ON s.medicine_id = m.id
-                WHERE s.customer_id = ? ORDER BY s.sale_date DESC";
-        
-        $history = [];
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "i", $customer_id);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
+    function search($keywords){
+        $query = "SELECT id, name, phone, email, created_at FROM " . $this->table_name . " WHERE name LIKE ? OR phone LIKE ? OR email LIKE ? ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
 
-            if (mysqli_num_rows($result) > 0) {
-                while ($row = mysqli_fetch_assoc($result)) {
-                    $history[] = $row;
-                }
-            }
-            mysqli_stmt_close($stmt);
-        }
-        return $history;
+        $keywords = htmlspecialchars(strip_tags($keywords));
+        $keywords = "%{$keywords}%";
+
+        $stmt->bindParam(1, $keywords);
+        $stmt->bindParam(2, $keywords);
+        $stmt->bindParam(3, $keywords);
+        $stmt->execute();
+        return $stmt;
     }
+
 }
-
 ?>

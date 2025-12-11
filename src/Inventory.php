@@ -1,108 +1,139 @@
 <?php
-
-class Inventory {
+class Inventory
+{
     private $conn;
+    private $table_name = "medicines";
 
-    public function __construct($db_connection) {
-        $this->conn = $db_connection;
+    public $id;
+    public $name;
+    public $code;
+    public $quantity;
+    public $price;
+    public $expiry_date;
+    public $location_code;
+    public $created_at;
+
+    public function __construct($db)
+    {
+        $this->conn = $db;
     }
 
-    public function addMedicine($name, $code, $quantity, $expiry_date, $location_code) {
-        $sql = "INSERT INTO medicines (name, code, quantity, expiry_date, location_code) VALUES (?, ?, ?, ?, ?)";
+    function create()
+    {
+        $query = "INSERT INTO " . $this->table_name . " SET name=:name, code=:code, quantity=:quantity, price=:price, expiry_date=:expiry_date, location_code=:location_code";
+        $stmt = $this->conn->prepare($query);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "ssiss", $name, $code, $quantity, $expiry_date, $location_code);
+        $this->name = htmlspecialchars(strip_tags($this->name));
+        $this->code = htmlspecialchars(strip_tags($this->code));
+        $this->quantity = htmlspecialchars(strip_tags($this->quantity));
+        $this->price = htmlspecialchars(strip_tags($this->price));
+        $this->expiry_date = htmlspecialchars(strip_tags($this->expiry_date));
+        $this->location_code = htmlspecialchars(strip_tags($this->location_code));
 
-            if (mysqli_stmt_execute($stmt)) {
-                return true;
-            } else {
-                return false;
-            }
-            mysqli_stmt_close($stmt);
+        $stmt->bindParam(":name", $this->name);
+        $stmt->bindParam(":code", $this->code);
+        $stmt->bindParam(":quantity", $this->quantity);
+        $stmt->bindParam(":price", $this->price);
+        $stmt->bindParam(":expiry_date", $this->expiry_date);
+        $stmt->bindParam(":location_code", $this->location_code);
+
+        if ($stmt->execute()) {
+            return true;
         }
         return false;
     }
 
-    public function getAllMedicines() {
-        $sql = "SELECT id, name, code, quantity, expiry_date, location_code, created_at FROM medicines ORDER BY name ASC";
-        $result = mysqli_query($this->conn, $sql);
-        $medicines = [];
-
-        if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $medicines[] = $row;
-            }
-        }
-        return $medicines;
+    function read()
+    {
+        $query = "SELECT id, name, code, quantity, price, expiry_date, location_code, created_at FROM " . $this->table_name . " ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
     }
 
-    public function getMedicineById($id) {
-        $sql = "SELECT id, name, code, quantity, expiry_date, location_code, created_at FROM medicines WHERE id = ?";
+    function readOne()
+    {
+        $query = "SELECT id, name, code, quantity, price, expiry_date, location_code, created_at FROM " . $this->table_name . " WHERE id = ? LIMIT 0,1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "i", $id);
-            if (mysqli_stmt_execute($stmt)) {
-                $result = mysqli_stmt_get_result($stmt);
-                if (mysqli_num_rows($result) == 1) {
-                    return mysqli_fetch_assoc($result);
-                }
-            }
-            mysqli_stmt_close($stmt);
-        }
-        return null;
+        $this->name = $row['name'];
+        $this->code = $row['code'];
+        $this->quantity = $row['quantity'];
+        $this->price = $row['price'];
+        $this->expiry_date = $row['expiry_date'];
+        $this->location_code = $row['location_code'];
+        $this->created_at = $row['created_at'];
     }
 
-    public function updateMedicine($id, $name, $code, $quantity, $expiry_date, $location_code) {
-        $sql = "UPDATE medicines SET name = ?, code = ?, quantity = ?, expiry_date = ?, location_code = ? WHERE id = ?";
+    function update()
+    {
+        $query = "UPDATE " . $this->table_name . " SET name = :name, code = :code, quantity = :quantity, price = :price, expiry_date = :expiry_date, location_code = :location_code WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "ssissi", $name, $code, $quantity, $expiry_date, $location_code, $id);
+        $this->name = htmlspecialchars(strip_tags($this->name));
+        $this->code = htmlspecialchars(strip_tags($this->code));
+        $this->quantity = htmlspecialchars(strip_tags($this->quantity));
+        $this->price = htmlspecialchars(strip_tags($this->price));
+        $this->expiry_date = htmlspecialchars(strip_tags($this->expiry_date));
+        $this->location_code = htmlspecialchars(strip_tags($this->location_code));
+        $this->id = htmlspecialchars(strip_tags($this->id));
 
-            if (mysqli_stmt_execute($stmt)) {
-                return true;
-            } else {
-                return false;
-            }
-            mysqli_stmt_close($stmt);
+        $stmt->bindParam(':name', $this->name);
+        $stmt->bindParam(':code', $this->code);
+        $stmt->bindParam(':quantity', $this->quantity);
+        $stmt->bindParam(':price', $this->price);
+        $stmt->bindParam(':expiry_date', $this->expiry_date);
+        $stmt->bindParam(':location_code', $this->location_code);
+        $stmt->bindParam(':id', $this->id);
+
+        if ($stmt->execute()) {
+            return true;
         }
         return false;
     }
 
-    public function deleteMedicine($id) {
-        $sql = "DELETE FROM medicines WHERE id = ?";
+    function delete()
+    {
+        $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
+        $stmt = $this->conn->prepare($query);
+        $this->id = htmlspecialchars(strip_tags($this->id));
+        $stmt->bindParam(1, $this->id);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "i", $id);
-
-            if (mysqli_stmt_execute($stmt)) {
-                return true;
-            } else {
-                return false;
-            }
-            mysqli_stmt_close($stmt);
+        if ($stmt->execute()) {
+            return true;
         }
         return false;
     }
 
-    public function searchMedicines($search_term) {
-        $sql = "SELECT id, name, code, quantity, expiry_date, location_code FROM medicines WHERE name LIKE ? OR code LIKE ? ORDER BY name ASC";
-        $search_param = "%" . $search_term . "%";
-        $medicines = [];
+    function search($keywords)
+    {
+        $query = "SELECT id, name, code, quantity, price, expiry_date, location_code, created_at FROM " . $this->table_name . " WHERE name LIKE ? OR code LIKE ? ORDER BY created_at DESC";
+        $stmt = $this->conn->prepare($query);
 
-        if ($stmt = mysqli_prepare($this->conn, $sql)) {
-            mysqli_stmt_bind_param($stmt, "ss", $search_param, $search_param);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
+        $keywords = htmlspecialchars(strip_tags($keywords));
+        $keywords = "%{$keywords}%";
 
-            if (mysqli_num_rows($result) > 0) {
-                while ($row = mysqli_fetch_assoc($result)) {
-                    $medicines[] = $row;
-                }
-            }
-            mysqli_stmt_close($stmt);
+        $stmt->bindParam(1, $keywords);
+        $stmt->bindParam(2, $keywords);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    function updateQuantity($medicine_id, $new_quantity)
+    {
+        $query = "UPDATE " . $this->table_name . " SET quantity = :quantity WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(':quantity', $new_quantity);
+        $stmt->bindParam(':id', $medicine_id);
+
+        if ($stmt->execute()) {
+            return true;
         }
-        return $medicines;
+        return false;
     }
 }
-
 ?>

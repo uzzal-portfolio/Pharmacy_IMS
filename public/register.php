@@ -1,85 +1,43 @@
 <?php
-session_start();
-
 require_once '../config/config.php';
+require_once '../src/User.php';
 
-$username = $password = $confirm_password = $role = "";
-$username_err = $password_err = $confirm_password_err = $role_err = "";
+$database = new Database();
+$db = $database->getConnection();
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Validate username
-    if (empty(trim($_POST['username']))) {
+$user = new User($db);
+
+$username = $password = $role = "";
+$username_err = $password_err = "";
+
+if($_SERVER["REQUEST_METHOD"] == "POST"){
+    if(empty(trim($_POST["username"]))){
         $username_err = "Please enter a username.";
-    } else {
-        // Prepare a select statement
-        $sql = "SELECT id FROM users WHERE username = ?";
-
-        if ($stmt = mysqli_prepare($link, $sql)) {
-            mysqli_stmt_bind_param($stmt, "s", $param_username);
-            $param_username = trim($_POST['username']);
-
-            if (mysqli_stmt_execute($stmt)) {
-                mysqli_stmt_store_result($stmt);
-
-                if (mysqli_stmt_num_rows($stmt) == 1) {
-                    $username_err = "This username is already taken.";
-                } else {
-                    $username = trim($_POST['username']);
-                }
-            } else {
-                echo "Oops! Something went wrong. Please try again later.";
-            }
-            mysqli_stmt_close($stmt);
-        }
+    } else if($user->usernameExists() ){
+        $username_err = "This username is already taken.";
+    }else{
+        $username = trim($_POST["username"]);
+        $user->username = $username;
     }
 
-    // Validate password
-    if (empty(trim($_POST['password']))) {
+    if(empty(trim($_POST["password"]))){
         $password_err = "Please enter a password.";
-    } elseif (strlen(trim($_POST['password'])) < 6) {
+    } elseif(strlen(trim($_POST["password"])) < 6){
         $password_err = "Password must have at least 6 characters.";
-    } else {
-        $password = trim($_POST['password']);
+    } else{
+        $password = trim($_POST["password"]);
+        $user->password = $password;
     }
 
-    // Validate confirm password
-    if (empty(trim($_POST['confirm_password']))) {
-        $confirm_password_err = "Please confirm password.";
-    } else {
-        $confirm_password = trim($_POST['confirm_password']);
-        if (empty($password_err) && ($password != $confirm_password)) {
-            $confirm_password_err = "Password did not match.";
+    $user->role = $_POST["role"];
+
+    if(empty($username_err) && empty($password_err)){
+        if($user->register()){
+            header("location: login.php");
+        } else{
+            echo "Something went wrong. Please try again later.";
         }
     }
-
-    // Validate role
-    if (empty(trim($_POST['role']))) {
-        $role_err = "Please select a role.";
-    } else {
-        $role = trim($_POST['role']);
-    }
-
-    // Check input errors before inserting in database
-    if (empty($username_err) && empty($password_err) && empty($confirm_password_err) && empty($role_err)) {
-        // Prepare an insert statement
-        $sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
-
-        if ($stmt = mysqli_prepare($link, $sql)) {
-            mysqli_stmt_bind_param($stmt, "sss", $param_username, $param_password, $param_role);
-
-            $param_username = $username;
-            $param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
-            $param_role = $role;
-
-            if (mysqli_stmt_execute($stmt)) {
-                header("location: login.php");
-            } else {
-                echo "Oops! Something went wrong. Please try again later.";
-            }
-            mysqli_stmt_close($stmt);
-        }
-    }
-    mysqli_close($link);
 }
 ?>
 
@@ -91,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body{ font: 14px sans-serif; }
-        .wrapper{ width: 360px; padding: 20px; }
+        .wrapper{ width: 360px; padding: 20px; margin: auto; margin-top: 50px; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0px 0px 10px 0px #0000001a; }
     </style>
 </head>
 <body>
@@ -103,34 +61,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <label>Username</label>
                 <input type="text" name="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $username; ?>">
                 <span class="invalid-feedback"><?php echo $username_err; ?></span>
-            </div>
+            </div>    
             <div class="form-group">
                 <label>Password</label>
                 <input type="password" name="password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $password; ?>">
                 <span class="invalid-feedback"><?php echo $password_err; ?></span>
             </div>
             <div class="form-group">
-                <label>Confirm Password</label>
-                <input type="password" name="confirm_password" class="form-control <?php echo (!empty($confirm_password_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $confirm_password; ?>">
-                <span class="invalid-feedback"><?php echo $confirm_password_err; ?></span>
-            </div>
-            <div class="form-group">
                 <label>Role</label>
-                <select name="role" class="form-control <?php echo (!empty($role_err)) ? 'is-invalid' : ''; ?>">
-                    <option value="">Select Role</option>
-                    <option value="admin" <?php echo ($role == 'admin') ? 'selected' : ''; ?>>Admin</option>
-                    <option value="store_clerk" <?php echo ($role == 'store_clerk') ? 'selected' : ''; ?>>Store Clerk</option>
-                    <option value="online_customer" <?php echo ($role == 'online_customer') ? 'selected' : ''; ?>>Online Customer</option>
-                    <option value="report_viewer" <?php echo ($role == 'report_viewer') ? 'selected' : ''; ?>>Report Viewer</option>
+                <select name="role" class="form-control">
+                    <option value="admin">Admin</option>
+                    <option value="store_clerk">Store Clerk</option>
+                    <option value="online_customer">Online Customer</option>
+                    <option value="report_viewer">Report Viewer</option>
                 </select>
-                <span class="invalid-feedback"><?php echo $role_err; ?></span>
             </div>
             <div class="form-group">
-                <input type="submit" class="btn btn-primary" value="Submit">
+                <input type="submit" class="btn btn-primary" value="Register">
                 <input type="reset" class="btn btn-secondary ml-2" value="Reset">
             </div>
             <p>Already have an account? <a href="login.php">Login here</a>.</p>
         </form>
-    </div>
+    </div>    
 </body>
 </html>

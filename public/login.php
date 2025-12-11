@@ -26,8 +26,12 @@
             <div class="form-group">
                 <input type="submit" class="btn btn-primary" value="Login">
             </div>
+            <?php 
+            if(!empty($_GET['error']) && $_GET['error'] == 1){
+                echo "<div class='alert alert-danger'>Invalid username or password.</div>";
+            }
+            ?>
         </form>
-        <p>Don't have an account? <a href="register.php">Sign up now</a>.</p>
     </div>    
 </body>
 </html>
