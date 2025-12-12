@@ -1,0 +1,327 @@
+
+% Save this content as a .tex file and compile with a LaTeX editor (e.g., Overleaf)- https://www.overleaf.com/project/693c554b91da4cf891bc42ee
+
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, er, trees, backgrounds, fit, calc}
+\usepackage{pgfgantt}
+\usepackage{tabularx}
+\usepackage{forest}
+\usepackage{float}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+
+% Global TikZ Styles
+\tikzset{
+    startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=red!30},
+    process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+    decision/.style={diamond, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30, aspect=2},
+    arrow/.style={thick,->,>=Stealth},
+    entity/.style={rectangle, draw=black, fill=gray!30, minimum width=2.5cm, minimum height=1cm},
+    datastore/.style={cylinder, shape border rotate=90, draw=black, fill=yellow!20, aspect=0.25, minimum width=2cm, minimum height=1cm}
+}
+
+\title{\textbf{Pharmacy Inventory Management System (IMS) \\ Project Report}}
+\author{Developed by Pharmacy IMS Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\vspace{2cm}
+
+\begin{center}
+    \Large \textbf{Project Source Code} \\[1cm]
+    \includegraphics[width=10cm]{qrcode_github.com.png} \\[1cm]
+    \url{https://github.com/uzzal-portfolio/Pharmacy_IMS}
+\end{center}
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction}
+The \textbf{Pharmacy Inventory Management System (IMS)} is a comprehensive, web-based application designed to modernize and streamline the daily operations of a pharmacy. In the rapidly evolving healthcare and retail sectors, efficiency and accuracy are paramount. Traditional manual methods of stock keeping and sales recording are prone to human error, time-consuming, and lack real-time visibility.
+
+This system provides a unified platform for managing inventory, processing sales via a Point of Sale (POS) interface, and generating detailed analytical reports. Integrating core business functions into a single interface allows pharmacy administrators and staff to track medicine expiry dates, monitor low stock levels, and manage customer relationships effectively. The application implements a Role-Based Access Control (RBAC) system, ensuring that sensitive data and critical administrative functions, such as user management and procurement, are accessible only to authorized personnel. Built using PHP, MySQL, and Bootstrap, the system ensures a responsive, user-friendly experience across various devices, ultimately aiming to enhance operational productivity and customer service quality.
+
+\section{Motivation}
+The primary motivation behind developing the Pharmacy IMS was to address the critical inefficiencies observed in manual pharmacy management.
+\begin{enumerate}
+    \item \textbf{Loss Reduction}: Manual tracking often leads to expired medicines going unnoticed, resulting in significant financial loss. This system automates expiry tracking to prevent waste.
+    \item \textbf{Operational Efficiency}: Searching for medicines in a physical logbook is slow. The digital catalog allows for instant search and retrieval, speeding up the checkout process.
+    \item \textbf{Accuracy}: Manual calculations for sales and discounts are error-prone. The automated POS ensures precise billing and financial reporting.
+    \item \textbf{Data-Driven Decisions}: Without centralized data, restocking is a guessing game. Detailed sales and inventory reports empower owners to make informed procurement decisions.
+\end{enumerate}
+By automating these routine tasks, the system frees up pharmacists to focus on their core responsibility: patient care and medication counseling.
+
+
+\section{Analysis \& Design}
+
+\subsection{System Flow Chart}
+\begin{figure}[H]
+\centering
+\resizebox{!}{0.8\textheight}{% Resize to fit height
+\begin{tikzpicture}[node distance=1.3cm and 1.3cm]
+    \node (start) [startstop] {Start};
+    \node (login) [process, below=of start] {Login Page};
+    \node (decide) [decision, below=of login] {Valid Creds?};
+    \node (dashboard) [process, below=of decide] {Dashboard};
+    \node (error) [process, right=2cm of decide] {Show Error};
+    
+    \node (module) [process, below=of dashboard] {Select Module};
+    \node (action) [process, below=of module] {Perform Action};
+    \node (logout) [process, below=of action] {Logout};
+    \node (stop) [startstop, below=of logout] {Stop};
+
+    \draw [arrow] (start) -- (login);
+    \draw [arrow] (login) -- (decide);
+    \draw [arrow] (decide) -- node[anchor=east] {Yes} (dashboard);
+    \draw [arrow] (decide) -- node[anchor=south] {No} (error);
+    \draw [arrow] (error) |- (login);
+    \draw [arrow] (dashboard) -- (module);
+    \draw [arrow] (module) -- (action);
+    \draw [arrow] (action) -- (logout);
+    \draw [arrow] (logout) -- (stop);
+\end{tikzpicture}
+}
+\caption{System Flow Chart}
+\end{figure}
+
+\subsection{Data Flow Diagrams (DFD)}
+
+\subsubsection{Level 0 DFD (Context Diagram)}
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[node distance=3cm]
+    \node (system) [process, fill=blue!20, minimum width=5cm, minimum height=3cm, align=center] {\Large Pharmacy IMS \\ \small (System)};
+    
+    \node (admin) [entity, left=3cm of system] {Admin};
+    \node (clerk) [entity, above=2cm of system] {Store Clerk};
+    \node (viewer) [entity, right=3cm of system] {Report Viewer};
+    \node (db) [datastore, below=2cm of system] {Database};
+
+    \draw [arrow] (admin) -- node[above, align=center] {Manage Users} (system);
+    \draw [arrow] (system) -- node[below, align=center] {Reports/Alerts} (admin);
+    
+    \draw [arrow] (clerk) -- node[right, align=center] {Sales} (system);
+    
+    \draw [arrow] (viewer) -- node[above, align=center] {View Reports} (system);
+    
+    \draw [arrow] (system) -- (db);
+    \draw [arrow] (db) -- (system);
+\end{tikzpicture}
+}
+\caption{Level 0 DFD}
+\end{figure}
+
+\subsubsection{Level 1 DFD (Inventory Module)}
+\begin{figure}[H]
+\centering
+\resizebox{0.9\textwidth}{!}{
+\begin{tikzpicture}[node distance=2.5cm]
+    \node (user) [entity] {User};
+    \node (proc1) [process, circle, fill=blue!20, right=3cm of user, align=center] {1.0 \\ Manage \\ Inventory};
+    \node (store1) [datastore, below=2cm of proc1] {Medicines Table};
+
+    \draw [arrow] (user) -- node[above] {Add/Edit} (proc1);
+    \draw [arrow] (proc1) -- node[right] {Save} (store1);
+    \draw [arrow] (store1.130) -- node[left] {Fetch} (proc1.230);
+    \draw [arrow] (proc1) -- node[below, midway, sloped, yshift=-2pt] {Alerts} (user);
+\end{tikzpicture}
+}
+\caption{Level 1 DFD}
+\end{figure}
+
+\newpage
+\subsection{Decision Tree (Access Control)}
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{forest}
+  for tree={l sep=1.5cm, s sep=1cm, edge={->, thick}, draw, rounded corners, inner sep=8pt, align=center, font=\sffamily}
+  [Start Login
+    [Check Credentials
+      [Valid
+        [Check Role
+            [Admin
+                [Access All Features, fill=green!20]
+            ]
+            [Store Clerk
+                [Access POS \\ \& Inventory, fill=yellow!20]
+            ]
+            [Report Viewer
+                [Access Reports \\ Only, fill=yellow!20]
+            ]
+        ]
+      ]
+      [Invalid
+        [Show Error, fill=red!20]
+      ]
+    ]
+  ]
+\end{forest}
+}
+\caption{Access Control Decision Tree}
+\end{figure}
+
+\subsection{Decision Table (Role Permissions)}
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Features / Roles} & \textbf{Admin} & \textbf{Store Clerk} & \textbf{Report Viewer} \\ \hline
+Manage Inventory & \textbf{Yes} & \textbf{Yes} & No \\ \hline
+Process Sales (POS) & \textbf{Yes} & \textbf{Yes} & No \\ \hline
+View Reports & \textbf{Yes} & No & \textbf{Yes} \\ \hline
+Manage Users & \textbf{Yes} & No & No \\ \hline
+Manage Customers & \textbf{Yes} & No & No \\ \hline
+\end{tabular}
+}
+\caption{System Access Control Matrix}
+\end{table}
+
+\subsection{Entity Relationship Diagram (ERD)}
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[node distance=2.5cm]
+    % Entities with specified width to prevent overlap
+    \node[entity] (users) {Users};
+    \node[entity] (medicines) [right=6cm of users] {Medicines};
+    \node[entity] (sales) [below=5cm of medicines] {Sales};
+    \node[entity] (customers) [left=6cm of sales] {Customers};
+
+    % Relationships (Using calc library for precise centering)
+    \node[relationship] (manages) at ($(users)!0.5!(medicines)$) {Manages}; 
+    \node[relationship] (contains) at ($(medicines)!0.5!(sales)$) {Contains};
+    \node[relationship] (buys) at ($(customers)!0.5!(sales)$) {Buys};
+
+    % Edges for Users
+    \node[attribute] (uid) [above=0.5cm of users] {\key{id}} edge (users);
+    \node[attribute] (uname) [left=0.5cm of users] {username} edge (users);
+
+    % Edges for Medicines
+    \node[attribute] (mid) [above=0.5cm of medicines] {\key{id}} edge (medicines);
+    \node[attribute] (mname) [right=0.5cm of medicines] {name} edge (medicines);
+
+    % Edges for Sales
+    \node[attribute] (sid) [below=0.5cm of sales] {\key{id}} edge (sales);
+    \node[attribute] (stotal) [right=0.5cm of sales] {total} edge (sales);
+    
+    % Connections
+    \draw (users) -- (manages) -- (medicines);
+    \draw (medicines) -- (contains) -- (sales);
+    \draw (customers) -- (buys) -- (sales);
+
+\end{tikzpicture}
+}
+\caption{Entity Relationship Diagram}
+\end{figure}
+
+\subsection{Gantt Chart (3 Month Timeline)}
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{ganttchart}[
+    vgrid,
+    hgrid,
+    time slot format=isodate,
+    x unit=0.3cm, % Compressing width
+    y unit chart=0.7cm
+    ]{2024-01-01}{2024-03-31}
+    \gantttitlecalendar{year, month=name, week} \\
+    
+    \ganttgroup[progress=100]{Analysis}{2024-01-01}{2024-01-31} \\
+    \ganttbar[progress=100]{Reqs}{2024-01-01}{2024-01-14} \\
+    \ganttbar[progress=100]{Design}{2024-01-15}{2024-01-31} \\
+    
+    \ganttgroup[progress=80]{Implementation}{2024-02-01}{2024-02-29} \\
+    \ganttbar[progress=100]{DB Setup}{2024-02-01}{2024-02-07} \\
+    \ganttbar[progress=90]{Backend}{2024-02-08}{2024-02-21} \\
+    \ganttbar[progress=70]{Frontend}{2024-02-15}{2024-02-29} \\
+
+    \ganttgroup[progress=0]{Testing}{2024-03-01}{2024-03-31} \\
+    \ganttbar{QA Tests}{2024-03-01}{2024-03-14} \\
+    \ganttbar{Docs}{2024-03-15}{2024-03-25} \\
+    \ganttbar{Release}{2024-03-26}{2024-03-31}
+\end{ganttchart}
+}
+\caption{Project Timeline}
+\end{figure}
+
+
+
+\section{User Manual}
+The following pages represent the core modules of the system.
+\begin{description}
+    \item[Login Page] \url{http://localhost/Pharmacy_IMS/public/login.php} \\
+    \item[] 
+    \textit{Access point for all users.}
+    
+    \item[Dashboard (Welcome)] \url{http://localhost/Pharmacy_IMS/public/welcome.php} \\
+    \textit{Central hub displaying quick actions.}
+    
+    \item[Inventory Management] \url{http://localhost/Pharmacy_IMS/public/inventory.php} \\
+    \textit{Add, edit, delete, and view medicines.}
+    
+    \item[Point of Sale (POS)] \url{http://localhost/Pharmacy_IMS/public/pos.php} \\
+    \textit{Process sales transactions.}
+    
+    \item[Sales History] \url{http://localhost/Pharmacy_IMS/public/sales.php} \\
+    \textit{View past transaction records.}
+    
+    \item[Reports] \url{http://localhost/Pharmacy_IMS/public/reports.php} \\
+    \textit{Generate PDF reports for stock and sales.}
+    
+    \item[User Management] \url{http://localhost/Pharmacy_IMS/public/user_management.php} \\
+    \textit{Admin interface for managing system users.}
+\end{description}
+\textit{(Screenshots can be inserted here in the final document)}
+
+\section{Dependencies and Requirements}
+\subsection{Software Requirements}
+\begin{itemize}
+    \item \textbf{Web Server}: Apache HTTP Server (via XAMPP v7.4+ recommended).
+    \item \textbf{Database}: MySQL or MariaDB.
+    \item \textbf{Language}: PHP 7.4 or higher.
+    \item \textbf{Browser}: Modern web browser (Chrome, Firefox, Edge).
+\end{itemize}
+
+\subsection{Hardware Requirements}
+\begin{itemize}
+    \item \textbf{Processor}: Intel Core i3 or equivalent.
+    \item \textbf{RAM}: 4GB Minimum (8GB Recommended).
+    \item \textbf{Storage}: 500MB free disk space for application and database.
+\end{itemize}
+
+\subsection{Deployment Network Diagram}
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{
+\begin{tikzpicture}[node distance=4cm]
+    \node (cloud) [cloud, draw, cloud puffs=10, cloud puff arc=120, aspect=2.5, inner sep=0.5cm, fill=blue!5] {\textbf{Internet / Intranet}};
+    
+    \node (server) [rectangle, draw, fill=gray!20, minimum size=2cm, left=1cm of cloud] {Web Server (XAMPP)};
+    
+    \node (client1) [rectangle, draw, minimum size=1.5cm, above right=1cm of cloud] {Admin PC};
+    \node (client2) [rectangle, draw, minimum size=1.5cm, below right=1cm of cloud] {Clerk PC};
+
+    \draw [<->, thick] (server) -- (cloud);
+    \draw [<->, thick] (cloud) -- (client1);
+    \draw [<->, thick] (cloud) -- (client2);
+\end{tikzpicture}
+}
+\caption{Deployment Network Diagram}
+\end{figure}
+
+\section{Conclusion}
+The Pharmacy Inventory Management System successfully achieves its goal of digitizing and automating key pharmacy operations. By providing a robust platform for inventory control, sales processing, and reporting, the system minimizes manual errors and enhances operational efficiency. The modular design with Role-Based Access Control ensures security and scalability. Future enhancements could include cloud integration, barcode scanner support, and advanced predictive analytics for stock procurement, further solidifying its value as an essential tool for modern pharmacy management.
+
+\end{document}

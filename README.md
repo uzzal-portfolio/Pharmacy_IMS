@@ -30,11 +30,10 @@ Secure login system with distinct user roles:
 -   **Admin**: Full access to all modules (Inventory, Sales, Reports, Procurement, User Mgmt).
 -   **Store Clerk**: Access to Inventory, Sales, and Procurement.
 -   **Report Viewer**: Access to Sales History and Reports only.
--   **Online Customer**: Limited viewing access.
 
 ### 5. **Additional Modules**
 -   **Procurement**: Manage purchase requests for out-of-stock items.
--   **User Management**: create and manage system users and change roles.
+-   **User Management**: Add, edit, and delete system users and manage roles.
 -   **Customer Database**: Maintain customer records.
 
 ## 🛠 Tech Stack
