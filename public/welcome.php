@@ -29,6 +29,13 @@ $role = $_SESSION["role"];
             border-radius: 0 0 20px 20px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .hero-logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
         }
 
         .hero-title {
@@ -65,18 +72,18 @@ $role = $_SESSION["role"];
             font-size: 1.2rem;
         }
 
-        .btn-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+        /* Custom class for 7 columns in a row on large screens */
+        @media (min-width: 992px) {
+            .col-lg-custom-7 {
+                -ms-flex: 0 0 14.2857%;
+                flex: 0 0 14.2857%;
+                max-width: 14.2857%;
+            }
         }
     </style>
 
     <div class="hero-section text-center">
+        <a href="logout.php" class="btn btn-danger btn-sm hero-logout-btn">Sign Out</a>
         <h1 class="hero-title">Welcome Back, <?php echo htmlspecialchars($_SESSION["username"]); ?>!</h1>
         <p class="hero-subtitle">Pharmacy Inventory Management Dashboard</p>
         <p class="mt-2"><span class="badge badge-light p-2"><?php echo ucfirst(str_replace('_', ' ', $role)); ?>
@@ -88,7 +95,7 @@ $role = $_SESSION["role"];
         <div class="row">
             <!-- POS Card -->
             <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'online_customer'): ?>
-                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
                     <a href="pos.php" class="text-decoration-none text-dark">
                         <div class="card dashboard-card p-3 text-center">
                             <div class="card-icon" style="font-size: 2rem;">🛒</div>
@@ -100,7 +107,7 @@ $role = $_SESSION["role"];
 
             <!-- Inventory Card -->
             <?php if ($role == 'admin' || $role == 'store_clerk'): ?>
-                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
                     <a href="inventory.php" class="text-decoration-none text-dark">
                         <div class="card dashboard-card p-3 text-center">
                             <div class="card-icon" style="font-size: 2rem;">💊</div>
@@ -112,7 +119,7 @@ $role = $_SESSION["role"];
 
             <!-- Sales History -->
             <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'online_customer' || $role == 'report_viewer'): ?>
-                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
                     <a href="sales.php" class="text-decoration-none text-dark">
                         <div class="card dashboard-card p-3 text-center">
                             <div class="card-icon" style="font-size: 2rem;">📋</div>
@@ -124,7 +131,7 @@ $role = $_SESSION["role"];
 
             <!-- Reports -->
             <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'report_viewer'): ?>
-                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
                     <a href="reports.php" class="text-decoration-none text-dark">
                         <div class="card dashboard-card p-3 text-center">
                             <div class="card-icon" style="font-size: 2rem;">📊</div>
@@ -136,7 +143,7 @@ $role = $_SESSION["role"];
 
             <!-- Procurement -->
             <?php if ($role == 'admin' || $role == 'store_clerk'): ?>
-                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
                     <a href="procurement.php" class="text-decoration-none text-dark">
                         <div class="card dashboard-card p-3 text-center">
                             <div class="card-icon" style="font-size: 2rem;">🚚</div>
@@ -146,9 +153,21 @@ $role = $_SESSION["role"];
                 </div>
             <?php endif; ?>
 
+            <!-- User Management -->
+            <?php if ($role == 'admin'): ?>
+                <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
+                    <a href="user_management.php" class="text-decoration-none text-dark">
+                        <div class="card dashboard-card p-3 text-center">
+                            <div class="card-icon" style="font-size: 2rem;">👤</div>
+                            <h6 class="card-title" style="font-size: 1rem;">Users</h6>
+                        </div>
+                    </a>
+                </div>
+            <?php endif; ?>
+
             <!-- Customer Database -->
             <?php if ($role == 'admin' || $role == 'online_customer'): ?>
-                <div class="col-6 col-md-4 col-lg-2 mb-3">
+                <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
                     <a href="customer_database.php" class="text-decoration-none text-dark">
                         <div class="card dashboard-card p-3 text-center">
                             <div class="card-icon" style="font-size: 2rem;">👥</div>
