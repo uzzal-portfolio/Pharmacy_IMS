@@ -18,50 +18,59 @@ $username = isset($_SESSION["username"]) ? $_SESSION["username"] : 'Guest';
 
     <!-- 2. Middle Aligned Links -->
     <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+        <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
         <ul class="navbar-nav">
             <li class="nav-item">
-                <a class="nav-link" href="welcome.php">Home</a>
+                <a class="nav-link <?php echo ($current_page == 'welcome.php') ? 'font-weight-bold' : ''; ?>"
+                    href="welcome.php">Home</a>
             </li>
 
             <?php if ($role == 'admin' || $role == 'store_clerk'): ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="inventory.php">Inventory</a>
+                    <a class="nav-link <?php echo ($current_page == 'inventory.php') ? 'font-weight-bold' : ''; ?>"
+                        href="inventory.php">Inventory</a>
                 </li>
             <?php endif; ?>
 
             <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'report_viewer'): ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="sales.php">Sales History</a>
+                    <a class="nav-link <?php echo ($current_page == 'sales.php') ? 'font-weight-bold' : ''; ?>"
+                        href="sales.php">Sales History</a>
                 </li>
             <?php endif; ?>
 
             <?php if ($role == 'admin' || $role == 'store_clerk'): ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="pos.php" style="font-weight: bold; color: #007bff;">POS</a>
+                    <a class="nav-link <?php echo ($current_page == 'pos.php') ? 'font-weight-bold' : ''; ?>" href="pos.php"
+                        style="<?php echo ($current_page == 'pos.php') ? '' : 'color: #007bff;'; ?>">POS</a>
                 </li>
             <?php endif; ?>
 
             <?php if ($role == 'admin' || $role == 'store_clerk'): ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="procurement.php">Procurement</a>
+                    <a class="nav-link <?php echo ($current_page == 'procurement.php') ? 'font-weight-bold' : ''; ?>"
+                        href="procurement.php">Procurement</a>
                 </li>
             <?php endif; ?>
 
             <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'report_viewer'): ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="reports.php">Reports</a>
+                    <a class="nav-link <?php echo ($current_page == 'reports.php') ? 'font-weight-bold' : ''; ?>"
+                        href="reports.php">Reports</a>
                 </li>
             <?php endif; ?>
 
             <?php if ($role == 'admin'): ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="user_management.php">User Management</a>
+                    <a class="nav-link <?php echo ($current_page == 'user_management.php') ? 'font-weight-bold' : ''; ?>"
+                        href="user_management.php">User Management</a>
                 </li>
             <?php endif; ?>
 
             <?php if ($role == 'admin'): ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="customer_database.php">Customer Database</a>
+                    <a class="nav-link <?php echo ($current_page == 'customer_database.php') ? 'font-weight-bold' : ''; ?>"
+                        href="customer_database.php">Customer Database</a>
                 </li>
             <?php endif; ?>
         </ul>
