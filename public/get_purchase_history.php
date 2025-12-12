@@ -8,7 +8,7 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
 }
 
 // Check user role for access control
-if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'online_customer') {
+if ($_SESSION['role'] !== 'admin') {
     echo '<p class="text-danger">Unauthorized access.</p>';
     exit;
 }

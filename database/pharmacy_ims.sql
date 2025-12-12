@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'store_clerk', 'online_customer', 'report_viewer') NOT NULL,
+    role ENUM('admin', 'store_clerk', 'report_viewer') NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -29,13 +29,13 @@ $username = isset($_SESSION["username"]) ? $_SESSION["username"] : 'Guest';
                 </li>
             <?php endif; ?>
 
-            <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'online_customer' || $role == 'report_viewer'): ?>
+            <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'report_viewer'): ?>
                 <li class="nav-item">
                     <a class="nav-link" href="sales.php">Sales History</a>
                 </li>
             <?php endif; ?>
 
-            <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'online_customer'): ?>
+            <?php if ($role == 'admin' || $role == 'store_clerk'): ?>
                 <li class="nav-item">
                     <a class="nav-link" href="pos.php" style="font-weight: bold; color: #007bff;">POS</a>
                 </li>
@@ -59,7 +59,7 @@ $username = isset($_SESSION["username"]) ? $_SESSION["username"] : 'Guest';
                 </li>
             <?php endif; ?>
 
-            <?php if ($role == 'admin' || $role == 'online_customer'): ?>
+            <?php if ($role == 'admin'): ?>
                 <li class="nav-item">
                     <a class="nav-link" href="customer_database.php">Customer Database</a>
                 </li>

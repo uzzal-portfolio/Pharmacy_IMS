@@ -94,7 +94,7 @@ $role = $_SESSION["role"];
         <h4 class="mb-3 text-secondary font-weight-bold">Quick Actions</h4>
         <div class="row">
             <!-- POS Card -->
-            <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'online_customer'): ?>
+            <?php if ($role == 'admin' || $role == 'store_clerk'): ?>
                 <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
                     <a href="pos.php" class="text-decoration-none text-dark">
                         <div class="card dashboard-card p-3 text-center">
@@ -118,7 +118,7 @@ $role = $_SESSION["role"];
             <?php endif; ?>
 
             <!-- Sales History -->
-            <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'online_customer' || $role == 'report_viewer'): ?>
+            <?php if ($role == 'admin' || $role == 'store_clerk' || $role == 'report_viewer'): ?>
                 <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
                     <a href="sales.php" class="text-decoration-none text-dark">
                         <div class="card dashboard-card p-3 text-center">
@@ -166,7 +166,7 @@ $role = $_SESSION["role"];
             <?php endif; ?>
 
             <!-- Customer Database -->
-            <?php if ($role == 'admin' || $role == 'online_customer'): ?>
+            <?php if ($role == 'admin'): ?>
                 <div class="col-6 col-md-4 col-lg-custom-7 mb-3">
                     <a href="customer_database.php" class="text-decoration-none text-dark">
                         <div class="card dashboard-card p-3 text-center">

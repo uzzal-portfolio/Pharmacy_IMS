@@ -145,7 +145,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <option value="admin">Admin</option>
                             <option value="store_clerk">Store Clerk</option>
                             <option value="report_viewer">Report Viewer</option>
-                            <option value="online_customer">Online Customer</option>
                         </select>
                     </div>
                     <button type="submit" name="add_user" class="btn btn-primary">Add User</button>
@@ -230,7 +229,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <option value="admin">Admin</option>
                                 <option value="store_clerk">Store Clerk</option>
                                 <option value="report_viewer">Report Viewer</option>
-                                <option value="online_customer">Online Customer</option>
                             </select>
                         </div>
 

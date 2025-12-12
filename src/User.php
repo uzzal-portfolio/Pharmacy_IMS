@@ -29,8 +29,13 @@ class User
         $stmt->bindParam(":password", $password_hash);
         $stmt->bindParam(":role", $this->role);
 
-        if ($stmt->execute()) {
-            return true;
+        try {
+            if ($stmt->execute()) {
+                return true;
+            }
+        } catch (PDOException $e) {
+            // Log error if needed, for now just returns false to handle it gracefully in UI
+            return false;
         }
         return false;
     }
