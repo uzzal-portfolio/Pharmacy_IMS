@@ -11,6 +11,7 @@ class Inventory
     public $price;
     public $expiry_date;
     public $location_code;
+    public $medicine_group;
     public $created_at;
 
     public function __construct($db)
@@ -20,7 +21,7 @@ class Inventory
 
     function create()
     {
-        $query = "INSERT INTO " . $this->table_name . " SET name=:name, code=:code, quantity=:quantity, price=:price, expiry_date=:expiry_date, location_code=:location_code";
+        $query = "INSERT INTO " . $this->table_name . " SET name=:name, code=:code, medicine_group=:medicine_group, quantity=:quantity, price=:price, expiry_date=:expiry_date, location_code=:location_code";
         $stmt = $this->conn->prepare($query);
 
         $this->name = htmlspecialchars(strip_tags($this->name));
@@ -28,10 +29,13 @@ class Inventory
         $this->quantity = htmlspecialchars(strip_tags($this->quantity));
         $this->price = htmlspecialchars(strip_tags($this->price));
         $this->expiry_date = htmlspecialchars(strip_tags($this->expiry_date));
-        $this->location_code = htmlspecialchars(strip_tags($this->location_code));
+        $this->code = htmlspecialchars(strip_tags($this->code));
+        $this->medicine_group = htmlspecialchars(strip_tags($this->medicine_group));
+        $this->quantity = htmlspecialchars(strip_tags($this->quantity));
 
         $stmt->bindParam(":name", $this->name);
         $stmt->bindParam(":code", $this->code);
+        $stmt->bindParam(":medicine_group", $this->medicine_group);
         $stmt->bindParam(":quantity", $this->quantity);
         $stmt->bindParam(":price", $this->price);
         $stmt->bindParam(":expiry_date", $this->expiry_date);
@@ -45,7 +49,7 @@ class Inventory
 
     function read()
     {
-        $query = "SELECT id, name, code, quantity, price, expiry_date, location_code, created_at FROM " . $this->table_name . " ORDER BY created_at DESC";
+        $query = "SELECT id, name, code, medicine_group, quantity, price, expiry_date, location_code, created_at FROM " . $this->table_name . " ORDER BY created_at DESC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
@@ -53,7 +57,7 @@ class Inventory
 
     function readOne()
     {
-        $query = "SELECT id, name, code, quantity, price, expiry_date, location_code, created_at FROM " . $this->table_name . " WHERE id = ? LIMIT 0,1";
+        $query = "SELECT id, name, code, medicine_group, quantity, price, expiry_date, location_code, created_at FROM " . $this->table_name . " WHERE id = ? LIMIT 0,1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $this->id);
         $stmt->execute();
@@ -61,6 +65,7 @@ class Inventory
 
         $this->name = $row['name'];
         $this->code = $row['code'];
+        $this->medicine_group = $row['medicine_group'];
         $this->quantity = $row['quantity'];
         $this->price = $row['price'];
         $this->expiry_date = $row['expiry_date'];
@@ -70,11 +75,12 @@ class Inventory
 
     function update()
     {
-        $query = "UPDATE " . $this->table_name . " SET name = :name, code = :code, quantity = :quantity, price = :price, expiry_date = :expiry_date, location_code = :location_code WHERE id = :id";
+        $query = "UPDATE " . $this->table_name . " SET name = :name, code = :code, medicine_group = :medicine_group, quantity = :quantity, price = :price, expiry_date = :expiry_date, location_code = :location_code WHERE id = :id";
         $stmt = $this->conn->prepare($query);
 
         $this->name = htmlspecialchars(strip_tags($this->name));
         $this->code = htmlspecialchars(strip_tags($this->code));
+        $this->medicine_group = htmlspecialchars(strip_tags($this->medicine_group));
         $this->quantity = htmlspecialchars(strip_tags($this->quantity));
         $this->price = htmlspecialchars(strip_tags($this->price));
         $this->expiry_date = htmlspecialchars(strip_tags($this->expiry_date));
@@ -83,6 +89,7 @@ class Inventory
 
         $stmt->bindParam(':name', $this->name);
         $stmt->bindParam(':code', $this->code);
+        $stmt->bindParam(':medicine_group', $this->medicine_group);
         $stmt->bindParam(':quantity', $this->quantity);
         $stmt->bindParam(':price', $this->price);
         $stmt->bindParam(':expiry_date', $this->expiry_date);
@@ -110,7 +117,7 @@ class Inventory
 
     function search($keywords)
     {
-        $query = "SELECT id, name, code, quantity, price, expiry_date, location_code, created_at FROM " . $this->table_name . " WHERE name LIKE ? OR code LIKE ? ORDER BY created_at DESC";
+        $query = "SELECT id, name, code, medicine_group, quantity, price, expiry_date, location_code, created_at FROM " . $this->table_name . " WHERE name LIKE ? OR code LIKE ? OR medicine_group LIKE ? ORDER BY created_at DESC";
         $stmt = $this->conn->prepare($query);
 
         $keywords = htmlspecialchars(strip_tags($keywords));
@@ -118,6 +125,7 @@ class Inventory
 
         $stmt->bindParam(1, $keywords);
         $stmt->bindParam(2, $keywords);
+        $stmt->bindParam(3, $keywords);
         $stmt->execute();
         return $stmt;
     }
@@ -134,6 +142,19 @@ class Inventory
             return true;
         }
         return false;
+    }
+
+    function searchGroups($term)
+    {
+        $query = "SELECT DISTINCT medicine_group FROM " . $this->table_name . " WHERE medicine_group LIKE ? ORDER BY medicine_group ASC LIMIT 10";
+        $stmt = $this->conn->prepare($query);
+
+        $term = htmlspecialchars(strip_tags($term));
+        $term = "%{$term}%";
+
+        $stmt->bindParam(1, $term);
+        $stmt->execute();
+        return $stmt;
     }
 }
 ?>

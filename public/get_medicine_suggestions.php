@@ -13,8 +13,9 @@ if (isset($_GET['term'])) {
     $jsonData = array();
     foreach ($rows as $row) {
         $data['value'] = $row['name'];
-        $data['label'] = $row['name']; // Display in dropdown
+        $data['label'] = $row['name'] . " (" . $row['medicine_group'] . ")"; // Display name + group
         $data['code'] = $row['code']; // Extra data for callback
+        $data['medicine_group'] = $row['medicine_group'];
         array_push($jsonData, $data);
     }
     echo json_encode($jsonData);

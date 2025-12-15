@@ -29,10 +29,11 @@ if (isset($_POST["import"])) {
         // fgetcsv($file); 
 
         while (($column = fgetcsv($file, 10000, ",")) !== FALSE) {
-            // Assuming CSV format: name, code
+            // Assuming CSV format: name, code, group
             if (isset($column[0]) && isset($column[1])) {
                 $catalog->name = trim($column[0]);
                 $catalog->code = trim($column[1]);
+                $catalog->medicine_group = isset($column[2]) ? trim($column[2]) : "";
 
                 if (!empty($catalog->name) && !empty($catalog->code)) {
                     if (!$catalog->exists()) {
@@ -76,7 +77,7 @@ if (isset($_POST["import"])) {
 <body>
     <div class="wrapper">
         <h2>Upload Medicine CSV</h2>
-        <p>CSV Format: Name, Code (No Header)</p>
+        <p>CSV Format: Name, Code, Group (No Header)</p>
 
         <?php if (!empty($message)) {
             echo '<div class="alert alert-info">' . $message . '</div>';

@@ -14,8 +14,8 @@ $db = $database->getConnection();
 
 $inventory = new Inventory($db);
 
-$name = $code = $quantity = $price = $expiry_date = $location_code = "";
-$name_err = $code_err = $quantity_err = $price_err = $expiry_date_err = "";
+$name = $code = $medicine_group = $quantity = $price = $expiry_date = $location_code = "";
+$name_err = $code_err = $medicine_group_err = $quantity_err = $price_err = $expiry_date_err = "";
 
 // Handle POST requests
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -60,10 +60,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $location_code = trim($_POST["location_code"]);
+        $medicine_group = trim($_POST["medicine_group"]); // Optional, no strict validation needed? Assume valid string.
 
         if (empty($name_err) && empty($code_err) && empty($quantity_err) && empty($price_err) && empty($expiry_date_err)) {
             $inventory->name = $name;
             $inventory->code = $code;
+            $inventory->medicine_group = $medicine_group;
             $inventory->quantity = $quantity;
             $inventory->price = $price;
             $inventory->expiry_date = $expiry_date;
@@ -79,6 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $inventory->id = $_POST["id"];
         $inventory->name = $_POST["name"];
         $inventory->code = $_POST["code"];
+        $inventory->medicine_group = $_POST["medicine_group"];
         $inventory->quantity = $_POST["quantity"];
         $inventory->price = $_POST["price"];
         $inventory->expiry_date = $_POST["expiry_date"];
@@ -162,6 +165,10 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <span class="invalid-feedback"><?php echo $code_err; ?></span>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label>Medicine Group</label>
+                        <input type="text" name="medicine_group" class="form-control" value="<?php echo $medicine_group; ?>">
+                    </div>
                     <div class="form-row">
                         <div class="form-group col-md-4">
                             <label>Quantity</label>
@@ -207,6 +214,7 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <th>ID</th>
                             <th>Name</th>
                             <th>Code</th>
+                            <th>Group</th>
                             <th>Quantity</th>
                             <th>Price</th>
                             <th>Expiry Date</th>
@@ -221,6 +229,7 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <td><?php echo $medicine['id']; ?></td>
                                     <td><?php echo $medicine['name']; ?></td>
                                     <td><?php echo $medicine['code']; ?></td>
+                                    <td><?php echo $medicine['medicine_group']; ?></td>
                                     <td><?php echo $medicine['quantity']; ?></td>
                                     <td><?php echo $medicine['price']; ?></td>
                                     <td><?php echo $medicine['expiry_date']; ?></td>
@@ -230,7 +239,7 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             data-id="<?php echo $medicine['id']; ?>"
                                             data-name="<?php echo $medicine['name']; ?>"
                                             data-code="<?php echo $medicine['code']; ?>"
-                                            data-code="<?php echo $medicine['code']; ?>"
+                                            data-group="<?php echo $medicine['medicine_group']; ?>"
                                             data-quantity="<?php echo $medicine['quantity']; ?>"
                                             data-price="<?php echo $medicine['price']; ?>"
                                             data-expiry="<?php echo $medicine['expiry_date']; ?>"
@@ -246,7 +255,7 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="7">No medicines found.</td>
+                                <td colspan="8">No medicines found.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -276,6 +285,10 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="form-group">
                             <label>Medicine Code</label>
                             <input type="text" name="code" id="medicine-code" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                             <label>Medicine Group</label>
+                             <input type="text" name="medicine_group" id="medicine-group" class="form-control">
                         </div>
                         <div class="form-group">
                             <label>Quantity</label>
@@ -314,6 +327,7 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 var id = $(this).data('id');
                 var name = $(this).data('name');
                 var code = $(this).data('code');
+                var group = $(this).data('group');
                 var quantity = $(this).data('quantity');
                 var price = $(this).data('price');
                 var expiry = $(this).data('expiry');
@@ -322,6 +336,7 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $('#medicine-id').val(id);
                 $('#medicine-name').val(name);
                 $('#medicine-code').val(code);
+                $('#medicine-group').val(group);
                 $('#medicine-quantity').val(quantity);
                 $('#medicine-price').val(price);
                 $('#medicine-expiry').val(expiry);
@@ -336,6 +351,7 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 minLength: 2,
                 select: function (event, ui) {
                     $('input[name="code"]').val(ui.item.code);
+                    $('input[name="medicine_group"]').val(ui.item.medicine_group);
                 }
             });
 
@@ -345,7 +361,20 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 minLength: 2,
                 select: function (event, ui) {
                     $('#medicine-code').val(ui.item.code);
+                    $('#medicine-group').val(ui.item.medicine_group);
                 }
+            });
+
+            // Autocomplete for Medicine Group (Add)
+            $('input[name="medicine_group"]').autocomplete({
+                source: "get_group_suggestions.php",
+                minLength: 1
+            });
+
+            // Autocomplete for Medicine Group (Edit Modal)
+            $('#medicine-group').autocomplete({
+                source: "get_group_suggestions.php",
+                minLength: 1
             });
         });
     </script>
