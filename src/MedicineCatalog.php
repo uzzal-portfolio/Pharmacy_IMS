@@ -48,11 +48,12 @@ class MedicineCatalog
     // Search for autocomplete
     public function search($term)
     {
-        $query = "SELECT name, code, medicine_group FROM " . $this->table_name . " WHERE name LIKE ? OR medicine_group LIKE ? ORDER BY name ASC LIMIT 10";
+        $query = "SELECT name, code, medicine_group FROM " . $this->table_name . " WHERE name LIKE ? OR code LIKE ? OR medicine_group LIKE ? ORDER BY name ASC LIMIT 10";
         $stmt = $this->conn->prepare($query);
         $term = "%" . $term . "%";
         $stmt->bindParam(1, $term);
         $stmt->bindParam(2, $term);
+        $stmt->bindParam(3, $term);
         $stmt->execute();
         return $stmt;
     }

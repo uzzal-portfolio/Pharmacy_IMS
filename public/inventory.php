@@ -69,12 +69,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $inventory->quantity = $quantity;
             $inventory->price = $price;
             $inventory->expiry_date = $expiry_date;
+            $inventory->expiry_date = $expiry_date;
             $inventory->location_code = $location_code;
 
-            if ($inventory->create()) {
-                header("location: inventory.php");
+            // Check if code already exists
+            if ($inventory->isCodeExists()) {
+                $code_err = "Medicine with this code already exists.";
             } else {
-                echo "Something went wrong. Please try again later.";
+                 if ($inventory->create()) {
+                    header("location: inventory.php");
+                 } else {
+                    echo "Something went wrong. Please try again later.";
+                 }
             }
         }
     } elseif (isset($_POST["update_medicine"])) {
@@ -167,7 +173,7 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                     <div class="form-group">
                         <label>Medicine Group</label>
-                        <input type="text" name="medicine_group" class="form-control" value="<?php echo $medicine_group; ?>">
+                        <input type="text" name="medicine_group" id="add-medicine-group" class="form-control" value="<?php echo $medicine_group; ?>">
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-4">
@@ -366,15 +372,36 @@ $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
             });
 
             // Autocomplete for Medicine Group (Add)
-            $('input[name="medicine_group"]').autocomplete({
+            // Autocomplete for Medicine Group (Add)
+            $('#add-medicine-group').autocomplete({
                 source: "get_group_suggestions.php",
                 minLength: 1
             });
 
             // Autocomplete for Medicine Group (Edit Modal)
             $('#medicine-group').autocomplete({
-                source: "get_group_suggestions.php",
-                minLength: 1
+                 source: "get_group_suggestions.php",
+                 minLength: 1
+            });
+
+            // Autocomplete for Medicine Code (Edit Modal)
+            $('#medicine-code').autocomplete({
+                 source: "get_medicine_suggestions.php?type=code",
+                 minLength: 1,
+                 select: function (event, ui) {
+                      $('#medicine-name').val(ui.item.name);
+                      $('#medicine-group').val(ui.item.medicine_group);
+                 }
+            });
+
+            // Autocomplete for Medicine Code (Add)
+            $('input[name="code"]').autocomplete({
+                source: "get_medicine_suggestions.php?type=code",
+                minLength: 1,
+                 select: function (event, ui) {
+                     $('input[name="name"]').val(ui.item.name);
+                     $('input[name="medicine_group"]').val(ui.item.medicine_group);
+                 }
             });
         });
     </script>

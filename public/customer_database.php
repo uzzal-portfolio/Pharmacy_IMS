@@ -27,17 +27,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $name = trim($_POST["name"]);
         }
 
-        // Validate phone
-        if (empty(trim($_POST["phone"]))) {
-            $phone_err = "Please enter a phone number.";
+        // Validate phone (Optional but processed if present)
+        $phone_input = trim($_POST["phone"]);
+        if(!empty($phone_input)) {
+             // Allow +, digits, spaces, dashes. Fail if alphabets.
+             if(!preg_match("/^[0-9+\-\s]*$/", $phone_input)){
+                 $phone_err = "Phone number can only contain numbers, +, - and spaces.";
+             } elseif(strlen($phone_input) > 15){
+                 $phone_err = "Phone number cannot exceed 15 characters.";
+             } else {
+                 $phone = $phone_input;
+             }
         } else {
-            $phone = trim($_POST["phone"]);
+            $phone = "";
         }
 
-        // Validate email
-        if (empty(trim($_POST["email"]))) {
-            $email_err = "Please enter an email.";
-        } elseif (!filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
+        // Validate email (Optional)
+        if (!empty(trim($_POST["email"])) && !filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
             $email_err = "Please enter a valid email address.";
         } else {
             $email = trim($_POST["email"]);
@@ -129,7 +135,10 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <label>Phone Number</label>
                             <input type="text" name="phone"
                                 class="form-control <?php echo (!empty($phone_err)) ? 'is-invalid' : ''; ?>"
-                                value="<?php echo $phone; ?>">
+                                value="<?php echo $phone; ?>"
+                                maxlength="15"
+                                oninput="this.value = this.value.replace(/[^0-9+]/g, '').replace(/(\..*)\./g, '$1');"
+                                placeholder="e.g. +8801700000000">
                             <span class="invalid-feedback"><?php echo $phone_err; ?></span>
                         </div>
                     </div>
@@ -215,11 +224,11 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                         <div class="form-group">
                             <label>Phone Number</label>
-                            <input type="text" name="phone" id="customer-phone" class="form-control" required>
+                            <input type="text" name="phone" id="customer-phone" class="form-control" maxlength="15" oninput="this.value = this.value.replace(/[^0-9+]/g, '').replace(/(\..*)\./g, '$1');">
                         </div>
                         <div class="form-group">
                             <label>Email</label>
-                            <input type="email" name="email" id="customer-email" class="form-control" required>
+                            <input type="email" name="email" id="customer-email" class="form-control">
                         </div>
                     </div>
                     <div class="modal-footer">

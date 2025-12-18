@@ -12,8 +12,12 @@ if (isset($_GET['term'])) {
 
     $jsonData = array();
     foreach ($rows as $row) {
-        $data['value'] = $row['name'];
+        $data['value'] = (isset($_GET['type']) && $_GET['type'] == 'code') ? $row['code'] : $row['name'];
         $data['label'] = $row['name'] . " (" . $row['medicine_group'] . ")"; // Display name + group
+        if (isset($_GET['type']) && $_GET['type'] == 'code') {
+             $data['label'] = $row['code'] . " - " . $row['name'];
+        }
+        $data['name'] = $row['name']; // Explicitly send name
         $data['code'] = $row['code']; // Extra data for callback
         $data['medicine_group'] = $row['medicine_group'];
         array_push($jsonData, $data);

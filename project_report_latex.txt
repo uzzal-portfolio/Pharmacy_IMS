@@ -5,6 +5,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage[table]{xcolor}
 \usepackage{graphicx}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, er, trees, backgrounds, fit, calc}
@@ -45,20 +46,37 @@
 \newpage
 
 \section{Introduction}
-The \textbf{Pharmacy Inventory Management System (IMS)} is a comprehensive, web-based application designed to modernize and streamline the daily operations of a pharmacy. In the rapidly evolving healthcare and retail sectors, efficiency and accuracy are paramount. Traditional manual methods of stock keeping and sales recording are prone to human error, time-consuming, and lack real-time visibility.
-
-This system provides a unified platform for managing inventory, processing sales via a Point of Sale (POS) interface, and generating detailed analytical reports. Integrating core business functions into a single interface allows pharmacy administrators and staff to track medicine expiry dates, monitor low stock levels, and manage customer relationships effectively. The application implements a Role-Based Access Control (RBAC) system, ensuring that sensitive data and critical administrative functions, such as user management and procurement, are accessible only to authorized personnel. Built using PHP, MySQL, and Bootstrap, the system ensures a responsive, user-friendly experience across various devices, ultimately aiming to enhance operational productivity and customer service quality.
+The \textbf{Pharmacy Inventory Management System (IMS)} is an open-source web application designed to democratize pharmacy automation. Released under the **GNU General Public License v3.0**, this project embraces the spirit of "free software"—free to run, study, change, and share. Unlike proprietary systems locked behind expensive licenses, our IMS is built on a "primal stack" of \textbf{HTML, CSS, JavaScript, and PHP}. These core technologies are the backbone of the web and are widely understood by developers globally. This strategic choice ensures that the codebase remains accessible, allowing students, hobbyists, and business owners to easily clone the repository and tailor the system to their specific needs without a steep learning curve. By leveraging the power of open source, we aim to provide a robust, flexible, and cost-effective solution for modernizing pharmacy operations while fostering a community of collaborative improvement.
 
 \section{Motivation}
-The primary motivation behind developing the Pharmacy IMS was to address the critical inefficiencies observed in manual pharmacy management.
-\begin{enumerate}
-    \item \textbf{Loss Reduction}: Manual tracking often leads to expired medicines going unnoticed, resulting in significant financial loss. This system automates expiry tracking to prevent waste.
-    \item \textbf{Operational Efficiency}: Searching for medicines in a physical logbook is slow. The digital catalog allows for instant search and retrieval, speeding up the checkout process.
-    \item \textbf{Accuracy}: Manual calculations for sales and discounts are error-prone. The automated POS ensures precise billing and financial reporting.
-    \item \textbf{Data-Driven Decisions}: Without centralized data, restocking is a guessing game. Detailed sales and inventory reports empower owners to make informed procurement decisions.
-\end{enumerate}
-By automating these routine tasks, the system frees up pharmacists to focus on their core responsibility: patient care and medication counseling.
+The primary motivation for this project drives from the belief that essential business tools should be accessible to everyone. Many existing inventory systems are either prohibitively expensive or too complex to modify. We wanted to create a solution that breaks down these barriers. By using a foundational technology stack (HTML/PHP/MySQL), we ensure that even developers with basic knowledge can maintain and enhance the system. This "easy-to-modify" architecture empowers users to clone the project and adapt it for unique workflows, whether for a small local pharmacy or a large retail chain, ensuring true technological freedom and adaptability.
 
+
+\section{Technical Specification}
+This section outlines the architectural and strategic decisions that form the foundation of the Pharmacy IMS.
+
+\subsection{Technical Perspective}
+The system architecture follows a classic **Model-View-Controller (MVC)** inspired pattern, implemented using raw PHP for transparency and ease of modification.
+\begin{enumerate}
+    \item \textbf{Frontend}: Built with **Bootstrap 4** and **jQuery**, providing a responsive and interactive user interface without the complexity of heavy frontend frameworks.
+    \item \textbf{Backend}: Core logic is written in **Vanilla PHP (v7.4+)**. This ensures compatibility with almost any standard web hosting environment.
+    \item \textbf{Database}: **MySQL** is used for data persistence, interacting via **PDO (PHP Data Objects)** to ensure security against SQL injection.
+    \item \textbf{Architecture}:
+    \begin{itemize}
+        \item \textbf{Modular Design}: Features like Inventory, Sales, and Reports are separated into distinct modules.
+        \item \textbf{RBAC}: A robust Role-Based Access Control system restricts unauthorized access.
+        \item \textbf{Security}: Input validation, session management, and password hashing (bcrypt) are strictly implemented.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Business Perspective}
+From a business standpoint, the system is designed to minimize operational costs while maximizing efficiency.
+\begin{enumerate}
+    \item \textbf{Cost-Effectiveness}: Being open-source eliminates licensing fees, making it ideal for small to medium independent pharmacies.
+    \item \textbf{Scalability}: The modular database design allows for easy addition of new branches or features (e.g., e-commerce integration) in the future.
+    \item \textbf{Reliability}: Automated calculations for sales and stock levels reduce human error, preventing revenue leakage.
+    \item \textbf{Compliance}: The expiry tracking feature ensures no expired medication is sold, protecting the business from legal liabilities and maintaining customer trust.
+\end{enumerate}
 
 \section{Analysis \& Design}
 
@@ -191,38 +209,121 @@ Manage Customers & \textbf{Yes} & No & No \\ \hline
 \begin{figure}[H]
 \centering
 \resizebox{\textwidth}{!}{
-\begin{tikzpicture}[node distance=2.5cm]
-    % Entities with specified width to prevent overlap
-    \node[entity] (users) {Users};
-    \node[entity] (medicines) [right=6cm of users] {Medicines};
-    \node[entity] (sales) [below=5cm of medicines] {Sales};
-    \node[entity] (customers) [left=6cm of sales] {Customers};
+\begin{tikzpicture}[
+    node distance=2cm, 
+    every node/.style={scale=0.85},
+    entity/.style={
+        shape=rectangle,
+        draw,
+        fill=white,
+        inner sep=0pt,
+        text width=4.5cm,
+        align=center
+    }
+]
 
-    % Relationships (Using calc library for precise centering)
-    \node[relationship] (manages) at ($(users)!0.5!(medicines)$) {Manages}; 
-    \node[relationship] (contains) at ($(medicines)!0.5!(sales)$) {Contains};
-    \node[relationship] (buys) at ($(customers)!0.5!(sales)$) {Buys};
+    % USERS Table
+    \node (users) [entity] {
+        \begin{tabular}{|l|}
+            \hline
+            \rowcolor{magenta!20} \textbf{USERS} \\ \hline
+            PK id (int) \\ \hline
+            username (varchar) \\ \hline
+            password (varchar) \\ \hline
+            role (enum) \\ \hline
+            created\_at (datetime) \\ \hline
+        \end{tabular}
+    };
 
-    % Edges for Users
-    \node[attribute] (uid) [above=0.5cm of users] {\key{id}} edge (users);
-    \node[attribute] (uname) [left=0.5cm of users] {username} edge (users);
+    % AUDIT_LOG Table
+    \node (audit) [entity, below=1.5cm of users] {
+        \begin{tabular}{|l|}
+            \hline
+            \rowcolor{cyan!10} \textbf{AUDIT\_LOG} \\ \hline
+            PK id (int) \\ \hline
+            FK user\_id (int) \\ \hline
+            action (varchar) \\ \hline
+            log\_date (datetime) \\ \hline
+        \end{tabular}
+    };
 
-    % Edges for Medicines
-    \node[attribute] (mid) [above=0.5cm of medicines] {\key{id}} edge (medicines);
-    \node[attribute] (mname) [right=0.5cm of medicines] {name} edge (medicines);
+    % MEDICINES Table
+    \node (medicines) [entity, right=1cm of users] {
+        \begin{tabular}{|l|}
+            \hline
+            \rowcolor{orange!20} \textbf{MEDICINES} \\ \hline
+            PK id (int) \\ \hline
+            name (varchar) \\ \hline
+            code (varchar) \\ \hline
+            group (varchar) \\ \hline
+            quantity (int) \\ \hline
+            price (decimal) \\ \hline
+            expiry\_date (date) \\ \hline
+            location\_code (varchar) \\ \hline
+        \end{tabular}
+    };
 
-    % Edges for Sales
-    \node[attribute] (sid) [below=0.5cm of sales] {\key{id}} edge (sales);
-    \node[attribute] (stotal) [right=0.5cm of sales] {total} edge (sales);
-    
-    % Connections
-    \draw (users) -- (manages) -- (medicines);
-    \draw (medicines) -- (contains) -- (sales);
-    \draw (customers) -- (buys) -- (sales);
+    % SALES Table
+    \node (sales) [entity, below=1cm of medicines] {
+        \begin{tabular}{|l|}
+            \hline
+            \rowcolor{cyan!20} \textbf{SALES} \\ \hline
+            PK id (int) \\ \hline
+            transaction\_id (varchar) \\ \hline
+            FK medicine\_id (int) \\ \hline
+            FK customer\_id (int) \\ \hline
+            quantity (int) \\ \hline
+            total\_price (decimal) \\ \hline
+            discount (decimal) \\ \hline
+            date (datetime) \\ \hline
+        \end{tabular}
+    };
+
+    % PROCUREMENT Table
+    \node (procurement) [entity, right=1cm of medicines] {
+        \begin{tabular}{|l|}
+            \hline
+            \rowcolor{red!20} \textbf{PROCUREMENT} \\ \hline
+            PK id (int) \\ \hline
+            medicine\_name (varchar) \\ \hline
+            quantity (int) \\ \hline
+            status (enum) \\ \hline
+            request\_date (datetime) \\ \hline
+        \end{tabular}
+    };
+
+    % CUSTOMERS Table
+    \node (customers) [entity, below=1cm of procurement] {
+        \begin{tabular}{|l|}
+            \hline
+            \rowcolor{green!20} \textbf{CUSTOMERS} \\ \hline
+            PK id (int) \\ \hline
+            name (varchar) \\ \hline
+            phone (varchar) \\ \hline
+            email (varchar) \\ \hline
+        \end{tabular}
+    };
+
+    % MEDICINE_CATALOG Table
+    \node (catalog) [entity, right=1cm of procurement] {
+        \begin{tabular}{|l|}
+            \hline
+            \rowcolor{violet!20} \textbf{MED\_CATALOG} \\ \hline
+            PK id (int) \\ \hline
+            name (varchar) \\ \hline
+            code (varchar) \\ \hline
+            group (varchar) \\ \hline
+        \end{tabular}
+    };
+
+    % Relationships
+    \draw [->, thick] (users) -- node[midway, fill=white, inner sep=2pt] {generates} (audit);
+    \draw [->, thick] (medicines) -- node[midway, fill=white, inner sep=2pt] {part of} (sales);
+    \draw [->, thick] (customers.west) -- node[midway, fill=white, inner sep=2pt] {makes} (sales.east);
 
 \end{tikzpicture}
 }
-\caption{Entity Relationship Diagram}
+\caption{Entity Relationship Diagram (Database Schema)}
 \end{figure}
 
 \subsection{Gantt Chart (3 Month Timeline)}
@@ -259,31 +360,70 @@ Manage Customers & \textbf{Yes} & No & No \\ \hline
 
 
 \section{User Manual}
-The following pages represent the core modules of the system.
-\begin{description}
-    \item[Login Page] \url{http://localhost/Pharmacy_IMS/public/login.php} \\
-    \item[] 
-    \textit{Access point for all users.}
-    
-    \item[Dashboard (Welcome)] \url{http://localhost/Pharmacy_IMS/public/welcome.php} \\
-    \textit{Central hub displaying quick actions.}
-    
-    \item[Inventory Management] \url{http://localhost/Pharmacy_IMS/public/inventory.php} \\
-    \textit{Add, edit, delete, and view medicines.}
-    
-    \item[Point of Sale (POS)] \url{http://localhost/Pharmacy_IMS/public/pos.php} \\
-    \textit{Process sales transactions.}
-    
-    \item[Sales History] \url{http://localhost/Pharmacy_IMS/public/sales.php} \\
-    \textit{View past transaction records.}
-    
-    \item[Reports] \url{http://localhost/Pharmacy_IMS/public/reports.php} \\
-    \textit{Generate PDF reports for stock and sales.}
-    
-    \item[User Management] \url{http://localhost/Pharmacy_IMS/public/user_management.php} \\
-    \textit{Admin interface for managing system users.}
-\end{description}
-\textit{(Screenshots can be inserted here in the final document)}
+The User Manual provides a step-by-step guide to navigating and utilizing the key features of the Pharmacy IMS.
+
+\subsection{Login Page}
+\textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/login.php}
+\begin{itemize}
+    \item Enter your unique \textbf{Username} and \textbf{Password}.
+    \item Click \textbf{Login}.
+    \item If credentials are valid, you are redirected to the Dashboard based on your role (Admin, Clerk, or Viewer).
+\end{itemize}
+
+\subsection{Dashboard}
+\textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/welcome.php}
+\begin{itemize}
+    \item View total stats: Total Medicines, Total Sales, Expiring Soon.
+    \item Quick links to main modules: Inventory, POS, Procurement, Reports.
+\end{itemize}
+
+\subsection{Inventory Management}
+\textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/inventory.php}
+\subsubsection{Add New Medicine}
+\begin{enumerate}
+    \item Click \textbf{Add New Medicine}.
+    \item \textbf{Medicine Name}: auto-complete enabled to prevent duplicates.
+    \item \textbf{Medicine Code}: Unique code. System alert if code already exists.
+    \item \textbf{Group}: Categorize medicine (e.g., Tablet, Syrup).
+    \item Fill Quantity, Price, Expiry Date, and Location.
+    \item Click \textbf{Add Medicine}.
+\end{enumerate}
+
+\subsection{Point of Sale (POS)}
+\textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/pos.php}
+\begin{itemize}
+    \item \textbf{Select Customer}: Search by Name or Phone number.
+    \item \textbf{New Customer}: If not found, simply type the new name and proceed. The system auto-creates the profile.
+    \item \textbf{Add Items}: Search medicine by Name or Code.
+    \item \textbf{Expiry Check}: System blocks adding expired items to the cart.
+    \item \textbf{Checkout}: Review cart, apply discounts, and complete sale.
+\end{itemize}
+
+\subsection{Customer Management}
+\textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/customer_database.php}
+\begin{enumerate}
+    \item \textbf{Add Customer}: Enter Name (Required).
+    \item \textbf{Phone/Email}: Optional fields for quick entry.
+    \item \textbf{Validation}: Phone field accepts only digits and '+' (max 15 chars).
+\end{enumerate}
+
+\subsection{Procurement}
+\textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/procurement.php}
+\begin{itemize}
+    \item \textbf{Request Stock}: Search for medicine by Name or Code. The form auto-fills the name.
+    \item \textbf{Quantity}: Enter required amount.
+    \item \textbf{Status}: Track requests as Pending, Approved, or Rejected.
+\end{itemize}
+
+\subsection{Reports}
+\textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/reports.php}
+Select a report type to generate a structured PDF:
+\begin{itemize}
+    \item \textbf{Stock Report}: Current inventory status.
+    \item \textbf{Sales Report}: Detailed financial logs.
+    \item \textbf{Expiry Report}: List of medicines expiring soon.
+    \item \textbf{Procurement Report}: Log of stock requests.
+\end{itemize}
 
 \section{Dependencies and Requirements}
 \subsection{Software Requirements}

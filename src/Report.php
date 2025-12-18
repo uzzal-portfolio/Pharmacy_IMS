@@ -49,5 +49,15 @@ class Report
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    function generateProcurementReport($start_date, $end_date)
+    {
+        $query = "SELECT medicine_name, quantity, status, request_date FROM procurement WHERE request_date BETWEEN :start_date AND :end_date ORDER BY request_date DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":start_date", $start_date);
+        $stmt->bindParam(":end_date", $end_date);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

@@ -105,6 +105,25 @@ if ($type == 'stock') {
         $pdf->Cell($w[4], 6, $row['location_code'], 1, 0, 'C');
         $pdf->Ln();
     }
+} elseif ($type == 'procurement') {
+    $data = $report->generateProcurementReport($start_date, $end_date);
+
+    $header = ['Request Date', 'Medicine Name', 'Quantity', 'Status'];
+    $w = [50, 80, 40, 40];
+
+    $pdf->SetFont('Arial', 'B', 12);
+    for ($i = 0; $i < count($header); $i++)
+        $pdf->Cell($w[$i], 7, $header[$i], 1, 0, 'C');
+    $pdf->Ln();
+
+    $pdf->SetFont('Arial', '', 11);
+    foreach ($data as $row) {
+        $pdf->Cell($w[0], 6, substr($row['request_date'], 0, 10), 1);
+        $pdf->Cell($w[1], 6, $row['medicine_name'], 1);
+        $pdf->Cell($w[2], 6, $row['quantity'], 1, 0, 'C');
+        $pdf->Cell($w[3], 6, ucfirst($row['status']), 1, 0, 'C');
+        $pdf->Ln();
+    }
 }
 
 $pdf->Output();

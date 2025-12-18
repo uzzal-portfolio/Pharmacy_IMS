@@ -11,10 +11,10 @@ require_once '../src/Customer.php';
 
 $database = new Database();
 $db = $database->getConnection();
-$customer = new Customer($db);
+$database = new Database();
+$db = $database->getConnection();
+// $customer = new Customer($db); // No longer needed to load all customers
 
-$stmt = $customer->read();
-$customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -105,13 +105,10 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="card-body">
                         <div class="form-group">
                             <label>Select Customer <span class="text-danger">*</span></label>
-                            <select id="customer-select" class="form-control" required>
-                                <option value="">-- Select Customer --</option>
-                                <?php foreach ($customers as $c): ?>
-                                    <option value="<?php echo $c['id']; ?>"><?php echo $c['name']; ?>
-                                        (<?php echo $c['phone']; ?>)</option>
-                                <?php endforeach; ?>
-                            </select>
+
+                            <input type="text" id="customer-search" class="form-control" placeholder="Search by name, phone... or enter new name" required>
+                            <input type="hidden" id="customer-id">
+                            <small class="form-text text-muted">Begin typing to search. If not found, just type the name.</small>
                         </div>
                         <div class="form-group">
                             <label>Payment Method</label>
@@ -197,6 +194,16 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Add Item to Cart
             function addItemToCart(item) {
+                // Check Expiry
+                var today = new Date();
+                today.setHours(0, 0, 0, 0);
+                var expiryDate = new Date(item.expiry);
+                
+                if (expiryDate < today) {
+                    alert("Error: This medicine has expired (" + item.expiry + ") and cannot be sold.");
+                    return;
+                }
+
                 // Check if already in cart
                 var existingItem = cart.find(x => x.id === item.id);
 
@@ -298,15 +305,35 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
             }
 
             // Checkout
+            // Customer Autocomplete
+            $("#customer-search").autocomplete({
+                source: "get_customer_suggestions.php",
+                minLength: 1,
+                select: function(event, ui) {
+                    $("#customer-id").val(ui.item.id);
+                    $("#customer-search").val(ui.item.value); // Just the name
+                    return false;
+                },
+                change: function(event, ui) {
+                     // If user clears the field or types something not selected, clear ID
+                     if (!ui.item) {
+                         $("#customer-id").val("");
+                     }
+                }
+            });
+
+            // Checkout
             $("#checkout-btn").click(function () {
                 if (cart.length === 0) {
                     alert("Cart is empty!");
                     return;
                 }
 
-                var customerId = $("#customer-select").val();
-                if (!customerId) {
-                    alert("Please select a valid Customer.");
+                var customerId = $("#customer-id").val();
+                var customerName = $("#customer-search").val().trim();
+
+                if (!customerId && !customerName) {
+                    alert("Please select a Customer or enter a name.");
                     return;
                 }
 
@@ -320,6 +347,7 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     data: JSON.stringify({
                         cart: cart,
                         customer_id: customerId,
+                        customer_name: customerName,
                         discount: discountAmount,
                         payment_method: paymentMethod
                     }),
@@ -329,6 +357,9 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             $("#successModal").modal('show');
                             cart = [];
                             renderCart();
+                            // Reset Customer
+                            $("#customer-search").val('');
+                            $("#customer-id").val('');
                         } else {
                             alert("Error: " + response.message);
                         }

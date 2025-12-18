@@ -22,8 +22,13 @@ class Customer {
         $this->email=htmlspecialchars(strip_tags($this->email));
 
         $stmt->bindParam(":name", $this->name);
-        $stmt->bindParam(":phone", $this->phone);
-        $stmt->bindParam(":email", $this->email);
+        
+        // Bind parameters, handle empty values as NULL or empty string
+        $phone_val = !empty($this->phone) ? $this->phone : "";
+        $email_val = !empty($this->email) ? $this->email : "";
+
+        $stmt->bindParam(":phone", $phone_val);
+        $stmt->bindParam(":email", $email_val);
 
         if($stmt->execute()){
             return true;
@@ -60,9 +65,12 @@ class Customer {
         $this->email=htmlspecialchars(strip_tags($this->email));
         $this->id=htmlspecialchars(strip_tags($this->id));
 
+        $phone_val = !empty($this->phone) ? $this->phone : "";
+        $email_val = !empty($this->email) ? $this->email : "";
+
         $stmt->bindParam(':name', $this->name);
-        $stmt->bindParam(':phone', $this->phone);
-        $stmt->bindParam(':email', $this->email);
+        $stmt->bindParam(':phone', $phone_val);
+        $stmt->bindParam(':email', $email_val);
         $stmt->bindParam(':id', $this->id);
 
         if($stmt->execute()){
@@ -93,6 +101,20 @@ class Customer {
         $stmt->bindParam(1, $keywords);
         $stmt->bindParam(2, $keywords);
         $stmt->bindParam(3, $keywords);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    // New search method for POS autocomplete
+    function searchCustomers($term){
+        $query = "SELECT id, name, phone FROM " . $this->table_name . " WHERE name LIKE ? OR phone LIKE ? LIMIT 10";
+        $stmt = $this->conn->prepare($query);
+
+        $term = htmlspecialchars(strip_tags($term));
+        $term = "%{$term}%";
+
+        $stmt->bindParam(1, $term);
+        $stmt->bindParam(2, $term);
         $stmt->execute();
         return $stmt;
     }

@@ -156,5 +156,18 @@ class Inventory
         $stmt->execute();
         return $stmt;
     }
+
+    function isCodeExists()
+    {
+        $query = "SELECT id FROM " . $this->table_name . " WHERE code = ? LIMIT 0,1";
+        $stmt = $this->conn->prepare($query);
+        $this->code = htmlspecialchars(strip_tags($this->code));
+        $stmt->bindParam(1, $this->code);
+        $stmt->execute();
+        if ($stmt->rowCount() > 0) {
+            return true;
+        }
+        return false;
+    }
 }
 ?>

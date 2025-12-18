@@ -225,8 +225,10 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script>
         $(document).ready(function () {
             $('.edit-request-btn').on('click', function () {
@@ -241,6 +243,27 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $('#request-status').val(status);
 
                 $('#editRequestModal').modal('show');
+            });
+
+            // Autocomplete for Medicine Name (Add)
+            $('input[name="medicine_name"]').autocomplete({
+                source: "get_medicine_suggestions.php", // Now searches Name OR Code
+                minLength: 1, // Start searching after 1 char (useful for short codes)
+                select: function(event, ui) {
+                    // Only fill name, as there's no code field here
+                    $(this).val(ui.item.value); // value is Name
+                    return false; // Prevent default behavior (which might fill with label)
+                }
+            });
+
+            // Autocomplete for Medicine Name (Edit Modal)
+            $('#request-name').autocomplete({
+                source: "get_medicine_suggestions.php",
+                minLength: 1,
+                select: function(event, ui) {
+                    $(this).val(ui.item.value);
+                    return false;
+                }
             });
         });
     </script>

@@ -55,26 +55,32 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true || ($_SESSIO
                     <hr>
                     <h5>Select Report Type:</h5>
                     <div class="row mt-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <button type="submit" name="type" value="stock" class="btn btn-info btn-block btn-lg">
                                 Stock Report
                             </button>
                             <small class="text-muted d-block text-center mt-2">Current inventory status and
                                 location.</small>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <button type="submit" name="type" value="sales" class="btn btn-success btn-block btn-lg">
                                 Sales Report
                             </button>
                             <small class="text-muted d-block text-center mt-2">Sales transactions, discounts, and
                                 revenue.</small>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6 mt-3">
                             <button type="submit" name="type" value="expiry" class="btn btn-danger btn-block btn-lg">
                                 Expiry Report
                             </button>
                             <small class="text-muted d-block text-center mt-2">Medicines expiring within date
                                 range.</small>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <button type="submit" name="type" value="procurement" class="btn btn-warning btn-block btn-lg">
+                                Procurement Report
+                            </button>
+                            <small class="text-muted d-block text-center mt-2">Medicine procurement requests and status.</small>
                         </div>
                     </div>
                 </form>
