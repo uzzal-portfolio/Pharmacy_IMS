@@ -28,7 +28,7 @@
 
 \title{\textbf{Pharmacy Inventory Management System (IMS) \\ Project Report}}
 \author{Developed by Pharmacy IMS Team}
-\date{\today}
+\date{\y}
 
 \begin{document}
 
@@ -115,44 +115,14 @@ From a business standpoint, the system is designed to minimize operational costs
 \subsubsection{Level 0 DFD (Context Diagram)}
 \begin{figure}[H]
 \centering
-\resizebox{\textwidth}{!}{
-\begin{tikzpicture}[node distance=3cm]
-    \node (system) [process, fill=blue!20, minimum width=5cm, minimum height=3cm, align=center] {\Large Pharmacy IMS \\ \small (System)};
-    
-    \node (admin) [entity, left=3cm of system] {Admin};
-    \node (clerk) [entity, above=2cm of system] {Store Clerk};
-    \node (viewer) [entity, right=3cm of system] {Report Viewer};
-    \node (db) [datastore, below=2cm of system] {Database};
-
-    \draw [arrow] (admin) -- node[above, align=center] {Manage Users} (system);
-    \draw [arrow] (system) -- node[below, align=center] {Reports/Alerts} (admin);
-    
-    \draw [arrow] (clerk) -- node[right, align=center] {Sales} (system);
-    
-    \draw [arrow] (viewer) -- node[above, align=center] {View Reports} (system);
-    
-    \draw [arrow] (system) -- (db);
-    \draw [arrow] (db) -- (system);
-\end{tikzpicture}
-}
+\includegraphics[width=0.9\textwidth]{DFD0.png}
 \caption{Level 0 DFD}
 \end{figure}
 
 \subsubsection{Level 1 DFD (Inventory Module)}
 \begin{figure}[H]
 \centering
-\resizebox{0.9\textwidth}{!}{
-\begin{tikzpicture}[node distance=2.5cm]
-    \node (user) [entity] {User};
-    \node (proc1) [process, circle, fill=blue!20, right=3cm of user, align=center] {1.0 \\ Manage \\ Inventory};
-    \node (store1) [datastore, below=2cm of proc1] {Medicines Table};
-
-    \draw [arrow] (user) -- node[above] {Add/Edit} (proc1);
-    \draw [arrow] (proc1) -- node[right] {Save} (store1);
-    \draw [arrow] (store1.130) -- node[left] {Fetch} (proc1.230);
-    \draw [arrow] (proc1) -- node[below, midway, sloped, yshift=-2pt] {Alerts} (user);
-\end{tikzpicture}
-}
+\includegraphics[width=0.9\textwidth]{DFD1.png}
 \caption{Level 1 DFD}
 \end{figure}
 
@@ -364,6 +334,11 @@ The User Manual provides a step-by-step guide to navigating and utilizing the ke
 
 \subsection{Login Page}
 \textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/login.php}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{LoginPage.png}
+\caption{Login Page Screenshot}
+\end{figure}
 \begin{itemize}
     \item Enter your unique \textbf{Username} and \textbf{Password}.
     \item Click \textbf{Login}.
@@ -377,6 +352,12 @@ The User Manual provides a step-by-step guide to navigating and utilizing the ke
     \item Quick links to main modules: Inventory, POS, Procurement, Reports.
 \end{itemize}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{heroPage.png}
+\caption{Dashboard Screenshot}
+\end{figure}
+
 \subsection{Inventory Management}
 \textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/inventory.php}
 \subsubsection{Add New Medicine}
@@ -389,6 +370,12 @@ The User Manual provides a step-by-step guide to navigating and utilizing the ke
     \item Click \textbf{Add Medicine}.
 \end{enumerate}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{inventory.png}
+\caption{Inventory Management Screenshot}
+\end{figure}
+
 \subsection{Point of Sale (POS)}
 \textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/pos.php}
 \begin{itemize}
@@ -399,6 +386,12 @@ The User Manual provides a step-by-step guide to navigating and utilizing the ke
     \item \textbf{Checkout}: Review cart, apply discounts, and complete sale.
 \end{itemize}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{pos.png}
+\caption{Point of Sale (POS) Screenshot}
+\end{figure}
+
 \subsection{Customer Management}
 \textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/customer_database.php}
 \begin{enumerate}
@@ -407,6 +400,12 @@ The User Manual provides a step-by-step guide to navigating and utilizing the ke
     \item \textbf{Validation}: Phone field accepts only digits and '+' (max 15 chars).
 \end{enumerate}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{cdm.png}
+\caption{Customer Management Screenshot}
+\end{figure}
+
 \subsection{Procurement}
 \textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/procurement.php}
 \begin{itemize}
@@ -414,6 +413,12 @@ The User Manual provides a step-by-step guide to navigating and utilizing the ke
     \item \textbf{Quantity}: Enter required amount.
     \item \textbf{Status}: Track requests as Pending, Approved, or Rejected.
 \end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{pm.png}
+\caption{Procurement Screenshot}
+\end{figure}
 
 \subsection{Reports}
 \textbf{URL}: \url{http://localhost/Pharmacy_IMS/public/reports.php}
@@ -424,6 +429,12 @@ Select a report type to generate a structured PDF:
     \item \textbf{Expiry Report}: List of medicines expiring soon.
     \item \textbf{Procurement Report}: Log of stock requests.
 \end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{rep.png}
+\caption{Reports Screenshot}
+\end{figure}
 
 \section{Dependencies and Requirements}
 \subsection{Software Requirements}
