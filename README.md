@@ -62,7 +62,7 @@ Secure login system with distinct user roles:
 
 2.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/yourusername/pharmacy-ims.git
+    git clone https://github.com/uzzal-portfolio/Pharmacy_IMS.git
     cd pharmacy-ims
     ```
     Place the folder in your `htdocs` directory (e.g., `C:\xampp\htdocs\Pharmacy_IMS`).
