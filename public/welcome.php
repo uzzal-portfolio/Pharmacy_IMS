@@ -182,7 +182,7 @@ $role = $_SESSION["role"];
         <h4 class="mb-4 mt-5 text-secondary font-weight-bold">Contributors</h4>
         <div class="row text-center">
             <div class="col-md-4 mb-4">
-                <a href="https://www.linkedin.com/in/uzzal-chandra-boissha-997792187"><img src="../src/img/1.png"
+                <a href="https://uzzal-portfolio.github.io/portfolio/"><img src="../src/img/1.png"
                         alt="Contributor 1" class="rounded-circle shadow-sm mb-3" width="120" height="120"></a>
                 <h5>Uzzal Chandra Boisssha</h5>
                 <p class="text-muted">Team lead</p>
